@@ -20,9 +20,8 @@ def parse_cmdargs():
     parser = optparse.OptionParser()
     parser.add_option('-s', '--sheetkey', action="store", dest="sheetkey", type="string")
     parser.add_option('-c', '--credential', action="store", dest="credential", type="string")
-    parser.add_option('--command', action="store", dest="command", type="string")
-    parser.add_option('--bot-token', action="store", dest="bot_token", type="string")
-    (opt, _) = parser.parse_args()
+    parser.add_option('--bot-token', action="store", dest="bottoken", type="string")
+    opt, _ = parser.parse_args()
     return opt
 
 def load_testdata(filename):
@@ -67,7 +66,7 @@ def update(table, user, term, price):
     users = next(col for col in cols if 'なまえ' in col) # don't work if there exist the user with the name 'なまえ'
     terms = next(row for row in rows if '月AM' in row) # same as abeve
     histbegin = terms.index('買値') # inclusive range
-    histend = histbegin + 13 # exclusive range
+    histend = histbegin + 13 # exclusive range, 13 = len(Sun, Mon AM, Mon PM, ... , Sat AM, Sat PM)
 
     # find target indicies of update
     if user not in users:
@@ -87,31 +86,52 @@ def update(table, user, term, price):
 
     return (oplist, orghist, newhist)
 
-def create_discord_client():
-    client = discord.Client()
+class TurnipPriceUpdateService:
+    def __init__(self, worksheet):
+        self.worksheet = worksheet
 
-    @client.event
-    async def on_ready():
-        print('ready')
+        client = discord.Client()
+        @client.event
+        async def on_ready():
+            print('ready')
+        @client.event
+        async def on_message(message):
+            self.on_message(message)
+        self.bot_client = client
 
-    @client.event
-    async def on_message(message):
+    def run(self, bottoken):
+        self.bot_client.run(bottoken)
+
+    async def on_message(self, message):
+        # reject message from bot
         if message.author.bot:
             return
-        if message.content == 'ping':
-            await message.channel.send('pong')
+        mention = '<@!{}>'.format(client.user.id)
+        content = message.content.strip().split()
+        # reject unless replay to me
+        if not content.startwith(mention):
+            return
+        # remove mention string
+        command = content[len(mention):].strip()
 
-    return client
+        user, term, price = parse_command(command)
+        table = self.worksheet.get_all_values()
 
-async def main():
+        ops, orghist, newhist = update(table, user, term, price)
+
+        # TODO: execute ops here
+
+        resp = "org: {}, new: {}".format(orghist, newhist)
+        await message.channel.send(response)
+
+def main():
     opt = parse_cmdargs()
-    sheetkey, credential, command, bot_token = opt.sheetkey, opt.credential, opt.command, opt.bot_token
-    print(sheetkey, credential, command, bot_token)
+    sheetkey, credential, bottoken = opt.sheetkey, opt.credential, opt.bottoken
+    print(sheetkey, credential, bottoken)
 
-    client = create_discord_client()
-    await client.start(bot_token)
-
-    user, term, price = parse_command(command)
+    worksheet = get_sheet(sheetkey, 0, credential)
+    service = TurnipPriceUpdateService(worksheet)
+    service.run(bottoken)
 
     # prod = False
     # if prod:
@@ -123,4 +143,4 @@ async def main():
     # print(oplist, org, new)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
