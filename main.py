@@ -8,7 +8,12 @@ sample:
 つぼ 木曜ａｍ １００
 '''
 
-import oauth2client, gspread, csv, optparse
+import asyncio
+import csv
+import discord
+import gspread
+import oauth2client
+import optparse
 from oauth2client.service_account import ServiceAccountCredentials
 
 def parse_cmdargs():
@@ -16,6 +21,7 @@ def parse_cmdargs():
     parser.add_option('-s', '--sheetkey', action="store", dest="sheetkey", type="string")
     parser.add_option('-c', '--credential', action="store", dest="credential", type="string")
     parser.add_option('--command', action="store", dest="command", type="string")
+    parser.add_option('--bot-token', action="store", dest="bot_token", type="string")
     (opt, _) = parser.parse_args()
     return opt
 
@@ -81,21 +87,40 @@ def update(table, user, term, price):
 
     return (oplist, orghist, newhist)
 
-def main():
+def create_discord_client():
+    client = discord.Client()
+
+    @client.event
+    async def on_ready():
+        print('ready')
+
+    @client.event
+    async def on_message(message):
+        if message.author.bot:
+            return
+        if message.content == 'ping':
+            await message.channel.send('pong')
+
+    return client
+
+async def main():
     opt = parse_cmdargs()
-    sheetkey, credential, command = opt.sheetkey, opt.credential, opt.command
-    print(sheetkey, credential, command)
+    sheetkey, credential, command, bot_token = opt.sheetkey, opt.credential, opt.command, opt.bot_token
+    print(sheetkey, credential, command, bot_token)
+
+    client = create_discord_client()
+    await client.start(bot_token)
 
     user, term, price = parse_command(command)
 
-    prod = False
-    if prod:
-        ws = get_sheet(sheetkey, 0, credential)
-        table = ws.get_all_values()
-    else:
-        table = load_testdata('./testdata.tsv')
-    oplist, org, new = update(table, user, term, price)
-    print(oplist, org, new)
+    # prod = False
+    # if prod:
+    #     ws = get_sheet(sheetkey, 0, credential)
+    #     table = ws.get_all_values()
+    # else:
+    #     table = load_testdata('./testdata.tsv')
+    # oplist, org, new = update(table, user, term, price)
+    # print(oplist, org, new)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
