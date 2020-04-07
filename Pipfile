@@ -9,6 +9,7 @@ verify_ssl = true
 oauth2client = "*"
 gspread = "*"
 google-auth = "*"
+discord-py = "*"
 
 [requires]
 python_version = "3.6"
