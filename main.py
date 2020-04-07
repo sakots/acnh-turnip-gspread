@@ -8,15 +8,16 @@ sample:
 つぼ 木曜ａｍ １００
 '''
 
-import asyncio
 import csv
+import datetime
+import optparse
+import time
+from typing import List, Optional
+
 import discord
 import gspread
-import time
-import oauth2client
-import optparse
-from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
+
 
 def parse_cmdargs():
     parser = optparse.OptionParser()
@@ -26,6 +27,7 @@ def parse_cmdargs():
     opt, _ = parser.parse_args()
     return opt
 
+
 def load_testdata(filename):
     table = None
     with open(filename, mode='r', newline='', encoding='utf-8') as f:
@@ -34,138 +36,146 @@ def load_testdata(filename):
         # return table # <- ok?
     return table
 
+
 class ChatService:
-    def __init__(mentionstr, usershint, termshint, currenttime):
+    def __init__(self, mentionstr: str, usershint: List[str], termshint: List[str], timestamp: float):
         self.mentionstr = mentionstr
         self.usershint = usershint
         self.termshint = termshint
+        self.timestamp = timestamp
 
-    def recogrize(message): # -> user, term, price
-        args = extract(message).split()
-        l = len(args)
-        if l == 1:
-            return message.user, timetoterm(message.time), args[0]
-        if l == 2:
+    def recognize(self, message) -> (str, str, int):  # user, term, price
+        args = self.pre(message).split()
+        length = len(args)
+        if length == 1:
+            return message.user, self.timetoterm(self.timestamp), int(args[0])
+        if length == 2:
             if args[0] in self.usershint:
-                return args[0], timetoterm(message.time), args[1]
+                return args[0], self.timetoterm(self.timestamp), int(args[1])
             if args[0] in self.termshint:
-                return message.user, args[0], args[1]
+                return message.user, args[0], int(args[1])
             raise ValueError("わかりません")
-        if l == 3:
-            return args[0], args[1], args[2]
+        if length == 3:
+            return args[0], args[1], int(args[2])
 
-    def extract(message):
+    def echo(self, message) -> str:
+        return self.pre(message)
+
+    def pre(self, message) -> Optional[str]:
+        """
+        前処理
+        """
         # reject message from bot
         if message.author.bot:
             return None
-        content = message.content.strip().split()
+        content: str = message.content.strip()
         # reject unless replay to me
-        if not content.startwith(mentionstr):
+        if not content.startswith(self.mentionstr):
             return None
         # remove mention string
-        command = content[len(mentionstr):].strip()
+        command = content[len(self.mentionstr):].strip()
         return command
 
     def timetoterm(self, timestamp):
-        datetime = datetime.fromtimestamp(time)
-        idx = datetime.fromtimestamp(time.time()).weekday()
-        weekday = '月火水木金土日'.split()[idx]
-        ampm = if datetime.hour < 12 'AM' else 'PM'
-        return next(term for term in termshint if weekday in term and ampm in term)
+        dt = datetime.datetime.fromtimestamp(timestamp)
+        idx: int = dt.fromtimestamp(time.time()).weekday()
+        weekday: str = '月火水木金土日'.split()[idx]
+        ampm: str = 'AM' if dt.hour < 12 else 'PM'
+        return next(term for term in self.termshint if weekday in term and ampm in term)
+
+
+def find_position(table, user, term) -> (int, int):
+    """
+    returns the tuple (updated operation list, original history, new history)
+    """
+    # find the header row and column
+    rows = table  # just an alias
+    cols = list(map(list, zip(*rows)))
+    users = next(col for col in cols if 'なまえ' in col)  # don't work if there exist the user with the name 'なまえ'
+    terms = next(row for row in rows if '月AM' in row)  # same as above
+
+    # find target indices of update
+    if user not in users:
+        raise ValueError('ユーザー {} が見つかりません'.format(user))
+    row_id = users.index(user)
+    if term not in terms:
+        raise ValueError('期間 {} が見つかりません'.format(term))
+    column_id = terms.index(term)
+
+    return row_id, column_id
+
+
+def get_sheet(worksheet: str, sheetindex: int, credential: str) -> gspread.Worksheet:
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
+    gc = gspread.authorize(credentials)
+    wks = gc.open_by_key(worksheet)
+    worksheets = wks.worksheets()
+    return worksheets[sheetindex]
+
 
 class GspreadService:
-    def __init__(self, sheetkey, sheetindex, credential):
-        self.sheet = getsheet(sheetkey, sheetindex, credential)
+    def __init__(self, sheetkey: str, sheetindex: int, credential: str):
+        self.sheet = get_sheet(sheetkey, sheetindex, credential)
+        self.table = self.fetch_table()
 
-    def getsheet(worksheet, sheetindex, credential):
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
-        gc = gspread.authorize(credentials)
-        wks = gc.open_by_key(worksheet)
-        worksheets = wks.worksheets()
-        return worksheets[sheetindex]
-
-    def make_query(table, user, term, price):
-        '''
-        returns the tuple (updated operation list, original history, new history)
-        '''
-        # find the header row and colmn
-        rows = table # just an alias
-        cols = list(map(list, zip(*rows)))
-        users = next(col for col in cols if 'なまえ' in col) # don't work if there exist the user with the name 'なまえ'
-        terms = next(row for row in rows if '月AM' in row) # same as abeve
-        histbegin = terms.index('買値') # inclusive range
-        histend = histbegin + 13 # exclusive range, 13 = len(Sun, Mon AM, Mon PM, ... , Sat AM, Sat PM)
-
-        # find target indicies of update
-        if user not in users:
-            raise ValueError('ユーザー {} が見つかりません'.format(user))
-        rowid = users.index(user)
-        if term not in terms:
-            raise ValueError('期間 {} が見つかりません'.format(term))
-        colid = terms.index(term)
-
-        # backup
-        orghist = table[rowid][histbegin:histend]
-
-        oplist = []
-        # update
-        table[rowid][colid] = price
-        newhist = table[rowid][histbegin:histend]
-
-        return (oplist, orghist, newhist)
-
-    def update_cell(self, row, column, value):
+    def set(self, row, column, value):
         return self.sheet.update_cell(row, column, value)
 
-    def get_all_values(self):
+    def fetch_table(self):
         return self.sheet.get_all_values()
 
-class TurnipPriceBotService:
-    def __init__(self, gspread):
-        self.gspread = gspread
+    def users(self) -> List[str]:
+        """
+        generate user list from self.table
+        """
+        pass
 
-        client = discord.Client()
-        @client.event
+    def terms(self) -> List[str]:
+        """
+        generate term list from self.table
+        """
+        pass
+
+
+class TurnipPriceBotService:
+    def __init__(self, worksheet: str, sheet_index: int, credential: str, bot_token: str):
+        self.gs = GspreadService(worksheet, sheet_index, credential)
+        self.bot_token = bot_token
+        self.client = discord.Client()
+
+        @self.client.event
         async def on_ready():
             print('ready')
-        @client.event
-        async def on_message(message):
-            self.on_message(message)
-        self.bot_client = client
 
-    def run(self, bottoken):
-        self.bot_client.run(bottoken)
+        @self.client.event
+        async def on_message(message):
+            await self.on_message(message)
+
+    def run(self):
+        self.client.run(self.bot_token)
 
     async def on_message(self, message):
-        # reject message from bot
-        if message.author.bot:
-            return
-        mention = '<@!{}>'.format(client.user.id)
-        content = message.content.strip().split()
-        # reject unless replay to me
-        if not content.startwith(mention):
-            return
-        # remove mention string
-        command = content[len(mention):].strip()
+        mention = '<@!{}>'.format(self.client.user.id)
+        #
+        chat = ChatService(mention, self.gs.users(), self.gs.terms(), time.time())
+        response = chat.echo(message)
+        # user, term, new_price = chat.recognize(message)
+        #
+        # row, column = find_position(self.gs.table, user, term)
+        # org_price = self.gs.table[row][column]
+        # self.gs.set(row, column, new_price)
+        # response = "org: {}, new: {}".format(org_price, new_price)
+        if response:
+            await message.channel.send(response)
 
-        user, term, price = parse_command(command)
-        table = self.gspread.get_all_values()
-
-        ops, orghist, newhist = self.gspread.update(table, user, term, price)
-        gspread.update_cell(row, column, value)
-
-        resp = "org: {}, new: {}".format(orghist, newhist)
-        await message.channel.send(response)
 
 def main():
     opt = parse_cmdargs()
     sheetkey, credential, bottoken = opt.sheetkey, opt.credential, opt.bottoken
     print(sheetkey, credential, bottoken)
-
-    worksheet = get_sheet(sheetkey, 0, credential)
-    service = TurnipPriceBotService(worksheet)
-    service.run(bottoken)
+    bot = TurnipPriceBotService(sheetkey, 0, credential, bottoken)
+    bot.run()
 
     # prod = False
     # if prod:
@@ -175,6 +185,7 @@ def main():
     #     table = load_testdata('./testdata.tsv')
     # oplist, org, new = update(table, user, term, price)
     # print(oplist, org, new)
+
 
 if __name__ == "__main__":
     main()
