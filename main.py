@@ -32,14 +32,6 @@ def load_testdata(filename):
         # return table # <- ok?
     return table
 
-def get_sheet(name, sheet_index, credential):
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
-    gc = gspread.authorize(credentials)
-    wks = gc.open_by_key(name)
-    worksheets = wks.worksheets()
-    return worksheets[sheet_index]
-
 def parse_command(command):
     '''
     returns the tuple (user, term, price)
@@ -56,39 +48,57 @@ def parse_command(command):
     else:
         raise ValueError("コマンドが解釈できません")
 
-def update(table, user, term, price):
-    '''
-    returns the tuple (updated operation list, original history, new history)
-    '''
-    # find the header row and colmn
-    rows = table # just an alias
-    cols = list(map(list, zip(*rows)))
-    users = next(col for col in cols if 'なまえ' in col) # don't work if there exist the user with the name 'なまえ'
-    terms = next(row for row in rows if '月AM' in row) # same as abeve
-    histbegin = terms.index('買値') # inclusive range
-    histend = histbegin + 13 # exclusive range, 13 = len(Sun, Mon AM, Mon PM, ... , Sat AM, Sat PM)
+class GspreadService:
+    def __init__(self, sheetkey, sheetindex, credential):
+        self.sheet = getsheet(sheetkey, sheetindex, credential)
 
-    # find target indicies of update
-    if user not in users:
-        raise ValueError('ユーザー {} が見つかりません'.format(user))
-    rowid = users.index(user)
-    if term not in terms:
-        raise ValueError('期間 {} が見つかりません'.format(term))
-    colid = terms.index(term)
+    def getsheet(worksheet, sheetindex, credential):
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
+        gc = gspread.authorize(credentials)
+        wks = gc.open_by_key(worksheet)
+        worksheets = wks.worksheets()
+        return worksheets[sheetindex]
 
-    # backup
-    orghist = table[rowid][histbegin:histend]
+    def update(table, user, term, price):
+        '''
+        returns the tuple (updated operation list, original history, new history)
+        '''
+        # find the header row and colmn
+        rows = table # just an alias
+        cols = list(map(list, zip(*rows)))
+        users = next(col for col in cols if 'なまえ' in col) # don't work if there exist the user with the name 'なまえ'
+        terms = next(row for row in rows if '月AM' in row) # same as abeve
+        histbegin = terms.index('買値') # inclusive range
+        histend = histbegin + 13 # exclusive range, 13 = len(Sun, Mon AM, Mon PM, ... , Sat AM, Sat PM)
 
-    oplist = []
-    # update
-    table[rowid][colid] = price
-    newhist = table[rowid][histbegin:histend]
+        # find target indicies of update
+        if user not in users:
+            raise ValueError('ユーザー {} が見つかりません'.format(user))
+        rowid = users.index(user)
+        if term not in terms:
+            raise ValueError('期間 {} が見つかりません'.format(term))
+        colid = terms.index(term)
 
-    return (oplist, orghist, newhist)
+        # backup
+        orghist = table[rowid][histbegin:histend]
 
-class TurnipPriceUpdateService:
-    def __init__(self, worksheet):
-        self.worksheet = worksheet
+        oplist = []
+        # update
+        table[rowid][colid] = price
+        newhist = table[rowid][histbegin:histend]
+
+        return (oplist, orghist, newhist)
+
+    def update_cell(self, row, column, value):
+        return self.sheet.update_cell(row, column, value)
+
+    def get_all_values(self):
+        return self.sheet.get_all_values()
+
+class TurnipPriceBotService:
+    def __init__(self, gspread):
+        self.gspread = gspread
 
         client = discord.Client()
         @client.event
@@ -115,11 +125,10 @@ class TurnipPriceUpdateService:
         command = content[len(mention):].strip()
 
         user, term, price = parse_command(command)
-        table = self.worksheet.get_all_values()
+        table = self.gspread.get_all_values()
 
-        ops, orghist, newhist = update(table, user, term, price)
-
-        # TODO: execute ops here
+        ops, orghist, newhist = self.gspread.update(table, user, term, price)
+        gspread.update_cell(row, column, value)
 
         resp = "org: {}, new: {}".format(orghist, newhist)
         await message.channel.send(response)
@@ -130,7 +139,7 @@ def main():
     print(sheetkey, credential, bottoken)
 
     worksheet = get_sheet(sheetkey, 0, credential)
-    service = TurnipPriceUpdateService(worksheet)
+    service = TurnipPriceBotService(worksheet)
     service.run(bottoken)
 
     # prod = False
