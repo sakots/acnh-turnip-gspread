@@ -12,8 +12,10 @@ import asyncio
 import csv
 import discord
 import gspread
+import time
 import oauth2client
 import optparse
+from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
 def parse_cmdargs():
@@ -32,21 +34,44 @@ def load_testdata(filename):
         # return table # <- ok?
     return table
 
-def parse_command(command):
-    '''
-    returns the tuple (user, term, price)
-    *now only accept [user] [term] [price] format*
-    TODO: make it more robust
-    '''
-    args = command.split()
-    l = len(args)
-    if l == 3:
-        user = args[0]
-        term = args[1]
-        price = int(args[2])
-        return user, term, price
-    else:
-        raise ValueError("コマンドが解釈できません")
+class ChatService:
+    def __init__(mentionstr, usershint, termshint, currenttime):
+        self.mentionstr = mentionstr
+        self.usershint = usershint
+        self.termshint = termshint
+
+    def recogrize(message): # -> user, term, price
+        args = extract(message).split()
+        l = len(args)
+        if l == 1:
+            return message.user, timetoterm(message.time), args[0]
+        if l == 2:
+            if args[0] in self.usershint:
+                return args[0], timetoterm(message.time), args[1]
+            if args[0] in self.termshint:
+                return message.user, args[0], args[1]
+            raise ValueError("わかりません")
+        if l == 3:
+            return args[0], args[1], args[2]
+
+    def extract(message):
+        # reject message from bot
+        if message.author.bot:
+            return None
+        content = message.content.strip().split()
+        # reject unless replay to me
+        if not content.startwith(mentionstr):
+            return None
+        # remove mention string
+        command = content[len(mentionstr):].strip()
+        return command
+
+    def timetoterm(self, timestamp):
+        datetime = datetime.fromtimestamp(time)
+        idx = datetime.fromtimestamp(time.time()).weekday()
+        weekday = '月火水木金土日'.split()[idx]
+        ampm = if datetime.hour < 12 'AM' else 'PM'
+        return next(term for term in termshint if weekday in term and ampm in term)
 
 class GspreadService:
     def __init__(self, sheetkey, sheetindex, credential):
@@ -60,7 +85,7 @@ class GspreadService:
         worksheets = wks.worksheets()
         return worksheets[sheetindex]
 
-    def update(table, user, term, price):
+    def make_query(table, user, term, price):
         '''
         returns the tuple (updated operation list, original history, new history)
         '''
