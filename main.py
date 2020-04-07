@@ -15,6 +15,7 @@ def parse_cmdargs():
     parser = optparse.OptionParser()
     parser.add_option('-s', '--sheetkey', action="store", dest="sheetkey", type="string")
     parser.add_option('-c', '--credential', action="store", dest="credential", type="string")
+    parser.add_option('--command', action="store", dest="command", type="string")
     (opt, _) = parser.parse_args()
     return opt
 
@@ -34,6 +35,22 @@ def get_sheet(name, sheet_index, credential):
     worksheets = wks.worksheets()
     return worksheets[sheet_index]
 
+def parse_command(command):
+    '''
+    returns the tuple (user, term, price)
+    *now only accept [user] [term] [price] format*
+    TODO: make it more robust
+    '''
+    args = command.split()
+    l = len(args)
+    if l == 3:
+        user = args[0]
+        term = args[1]
+        price = int(args[2])
+        return user, term, price
+    else:
+        raise ValueError("コマンドが解釈できません")
+
 def update(table, user, term, price):
     '''
     returns the tuple (updated operation list, original history, new history)
@@ -51,7 +68,7 @@ def update(table, user, term, price):
         raise ValueError('ユーザー {} が見つかりません'.format(user))
     rowid = users.index(user)
     if term not in terms:
-        raise ValueError('期間 {} が見つかりません'.format(user))
+        raise ValueError('期間 {} が見つかりません'.format(term))
     colid = terms.index(term)
 
     # backup
@@ -59,22 +76,25 @@ def update(table, user, term, price):
 
     oplist = []
     # update
-    # table[rowid][colid] = price
+    table[rowid][colid] = price
     newhist = table[rowid][histbegin:histend]
 
     return (oplist, orghist, newhist)
 
 def main():
     opt = parse_cmdargs()
-    sheetkey, credential = opt.sheetkey, opt.credential
-    print(sheetkey, credential)
-    prod = True
+    sheetkey, credential, command = opt.sheetkey, opt.credential, opt.command
+    print(sheetkey, credential, command)
+
+    user, term, price = parse_command(command)
+
+    prod = False
     if prod:
         ws = get_sheet(sheetkey, 0, credential)
         table = ws.get_all_values()
     else:
         table = load_testdata('./testdata.tsv')
-    oplist, org, new = update(table, 'つぼ', '月AM', 100)
+    oplist, org, new = update(table, user, term, price)
     print(oplist, org, new)
 
 if __name__ == "__main__":
