@@ -38,30 +38,31 @@ def load_testdata(filename):
 
 
 class ChatService:
-    def __init__(self, mentionstr: str, usershint: List[str], termshint: List[str], timestamp: float):
-        self.mentionstr = mentionstr
-        self.usershint = usershint
-        self.termshint = termshint
+    def __init__(self, mention_str: str, users_hint: List[str], terms_hint: List[str], timestamp: float):
+        self.mention_str = mention_str
+        self.users_hint = users_hint
+        self.terms_hint = terms_hint
         self.timestamp = timestamp
 
+    # TODO: 大文字小文字全角半角
     def recognize(self, message) -> (str, str, int):  # user, term, price
+        name = message.author.nick or message.author.name  # ニックネーム優先
         command = self.preprocess(message)
         if not command:
             return None, None, None
-        args: List[str] = command.split()
+
+        args: List[str] = command.split()  # 全角スペースもうまくsplitされる
         length = len(args)
         if length == 0:
             raise ValueError("length 0 is unimplemented")
         if length == 1:
-            raise ValueError("length 1 is unimplemented")
-            # return message.user, self.timetoterm(self.timestamp), int(args[0])
+            return name, self.time_to_term(), int(args[0])
         if length == 2:
-            raise ValueError("length 2 is unimplemented")
-            # if args[0] in self.usershint:
-            #     return args[0], self.timetoterm(self.timestamp), int(args[1])
-            # if args[0] in self.termshint:
-            #     return message.user, args[0], int(args[1])
-            # raise ValueError("わかりません")
+            if args[0] in self.users_hint:
+                return args[0], self.time_to_term(), int(args[1])
+            if args[0] in self.terms_hint:
+                return name, args[0], int(args[1])
+            raise ValueError("わかりません")
         if length == 3:
             return args[0], args[1], int(args[2])
 
@@ -74,18 +75,18 @@ class ChatService:
             return None
         content: str = message.content.strip()
         # reject unless replay to me
-        if not content.startswith(self.mentionstr):
+        if not content.startswith(self.mention_str):
             return None
         # remove mention string
-        command = content[len(self.mentionstr):].strip()
+        command = content[len(self.mention_str):].strip()
         return command
 
-    def timetoterm(self, timestamp):
-        dt = datetime.datetime.fromtimestamp(timestamp)
+    def time_to_term(self):
+        dt = datetime.datetime.fromtimestamp(self.timestamp)
         idx: int = dt.fromtimestamp(time.time()).weekday()
-        weekday: str = '月火水木金土日'.split()[idx]
+        weekday = [char for char in '月火水木金土日'][idx]
         ampm: str = 'AM' if dt.hour < 12 else 'PM'
-        return next(term for term in self.termshint if weekday in term and ampm in term)
+        return next(term for term in self.terms_hint if weekday in term and ampm in term)
 
 
 def find_position(table, user, term) -> (int, int):
@@ -121,25 +122,32 @@ def get_sheet(worksheet: str, sheetindex: int, credential: str) -> gspread.Works
 class GspreadService:
     def __init__(self, sheetkey: str, sheetindex: int, credential: str):
         self.sheet = get_sheet(sheetkey, sheetindex, credential)
-        self.table = self.fetch_table()
+        self.table = None
 
     def set(self, row, column, value):
         return self.sheet.update_cell(row, column, value)
 
     def fetch_table(self):
-        return self.sheet.get_all_values()
+        self.table = self.sheet.get_all_values()
 
     def users(self) -> List[str]:
-        """
-        generate user list from self.table
-        """
-        pass
+        if not self.table:
+            raise AssertionError("call fetch_table method before")
+        cols = list(map(list, zip(*self.table)))
+        # Don't work unless the header string is 'なまえ', and there is no user with name 'なまえ.'
+        user_column_identifier = 'なまえ'
+        users_column = next(col for col in cols if user_column_identifier in col)
+        idx = users_column.index(user_column_identifier)
+        return users_column[idx + 1:]
 
     def terms(self) -> List[str]:
-        """
-        generate term list from self.table
-        """
-        pass
+        if not self.table:
+            raise AssertionError("call fetch_table method before")
+        # See the comment of users
+        terms_row_identifier = '買値'
+        terms_row = next(row for row in self.table if terms_row_identifier in row)
+        idx = terms_row.index(terms_row_identifier)
+        return terms_row[idx:idx + 13]
 
 
 class TurnipPriceBotService:
@@ -162,6 +170,7 @@ class TurnipPriceBotService:
     async def on_message(self, message):
         mention = '<@!{}>'.format(self.client.user.id)
 
+        self.gs.fetch_table()
         chat = ChatService(mention, self.gs.users(), self.gs.terms(), time.time())
         user, term, new_price = chat.recognize(message)
         if not user:
