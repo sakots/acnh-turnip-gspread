@@ -169,7 +169,7 @@ class TurnipPriceBotService:
         print(user, term, new_price)
         row, column = find_position(self.gs.table, user, term)
         org_price = self.gs.table[row][column]
-        # self.gs.set(row, column, new_price)
+        self.gs.set(row + 1, column + 1, new_price)
         response = "org: {}, new: {}".format(org_price, new_price)
         if response:
             await message.channel.send(response)
