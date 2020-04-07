@@ -45,26 +45,30 @@ class ChatService:
         self.timestamp = timestamp
 
     def recognize(self, message) -> (str, str, int):  # user, term, price
-        args = self.pre(message).split()
+        command = self.preprocess(message)
+        if not command:
+            return None, None, None
+        args: List[str] = command.split()
         length = len(args)
+        if length == 0:
+            raise ValueError("length 0 is unimplemented")
         if length == 1:
-            return message.user, self.timetoterm(self.timestamp), int(args[0])
+            raise ValueError("length 1 is unimplemented")
+            # return message.user, self.timetoterm(self.timestamp), int(args[0])
         if length == 2:
-            if args[0] in self.usershint:
-                return args[0], self.timetoterm(self.timestamp), int(args[1])
-            if args[0] in self.termshint:
-                return message.user, args[0], int(args[1])
-            raise ValueError("わかりません")
+            raise ValueError("length 2 is unimplemented")
+            # if args[0] in self.usershint:
+            #     return args[0], self.timetoterm(self.timestamp), int(args[1])
+            # if args[0] in self.termshint:
+            #     return message.user, args[0], int(args[1])
+            # raise ValueError("わかりません")
         if length == 3:
             return args[0], args[1], int(args[2])
 
     def echo(self, message) -> str:
-        return self.pre(message)
+        return self.preprocess(message)
 
-    def pre(self, message) -> Optional[str]:
-        """
-        前処理
-        """
+    def preprocess(self, message) -> Optional[str]:
         # reject message from bot
         if message.author.bot:
             return None
@@ -157,15 +161,16 @@ class TurnipPriceBotService:
 
     async def on_message(self, message):
         mention = '<@!{}>'.format(self.client.user.id)
-        #
+
         chat = ChatService(mention, self.gs.users(), self.gs.terms(), time.time())
-        response = chat.echo(message)
-        # user, term, new_price = chat.recognize(message)
-        #
-        # row, column = find_position(self.gs.table, user, term)
-        # org_price = self.gs.table[row][column]
+        user, term, new_price = chat.recognize(message)
+        if not user:
+            return
+        print(user, term, new_price)
+        row, column = find_position(self.gs.table, user, term)
+        org_price = self.gs.table[row][column]
         # self.gs.set(row, column, new_price)
-        # response = "org: {}, new: {}".format(org_price, new_price)
+        response = "org: {}, new: {}".format(org_price, new_price)
         if response:
             await message.channel.send(response)
 
