@@ -26,13 +26,13 @@ def load_testdata(filename):
         # return table # <- ok?
     return table
 
-def get_worksheet(sheetkey, credential_fileneme):
+def get_sheet(name, sheet_index, credential):
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(credential_fileneme, scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
     gc = gspread.authorize(credentials)
-    wks = gc.open_by_key(sheetkey)
+    wks = gc.open_by_key(name)
     worksheets = wks.worksheets()
-    return worksheets[0]
+    return worksheets[sheet_index]
 
 def update(table, user, term, price):
     '''
@@ -59,7 +59,7 @@ def update(table, user, term, price):
 
     oplist = []
     # update
-    table[rowid][colid] = price
+    # table[rowid][colid] = price
     newhist = table[rowid][histbegin:histend]
 
     return (oplist, orghist, newhist)
@@ -68,9 +68,9 @@ def main():
     opt = parse_cmdargs()
     sheetkey, credential = opt.sheetkey, opt.credential
     print(sheetkey, credential)
-    prod = False
+    prod = True
     if prod:
-        ws = get_worksheet(sheetkey, credential)
+        ws = get_sheet(sheetkey, 0, credential)
         table = ws.get_all_values()
     else:
         table = load_testdata('./testdata.tsv')
