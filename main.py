@@ -1,13 +1,3 @@
-'''
-sample:
-100
-つぼ 100
-木曜午前 100
-つぼ 木曜AM 100
-つぼ 木曜am 100
-つぼ 木曜ａｍ １００
-'''
-
 import csv
 import optparse
 

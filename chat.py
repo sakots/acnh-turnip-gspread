@@ -92,16 +92,6 @@ class ChatService:
         self.mention_str = mention_str
 
     def recognize(self, message) -> UpdateRequest:
-        """
-        sample:
-        100
-        木曜午前 100
-        木曜AM 100
-        木曜am 100
-        木曜ａｍ １００
-        am木 100
-        100 木曜午前
-        """
         message_time: datetime.datetime = message.created_at
         command = preprocess(self.mention_str, message)
         if len(command) == 0:
