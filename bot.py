@@ -6,7 +6,9 @@ from main import logger
 
 
 class TurnipPriceBotService:
-    def __init__(self, worksheet: str, sheet_index: int, credential: str, bot_token: str):
+    def __init__(
+        self, worksheet: str, sheet_index: int, credential: str, bot_token: str
+    ):
         self.gs = gspreads.GspreadService(worksheet, sheet_index, credential)
         self.bot_token = bot_token
         self.client = discord.Client()
@@ -14,7 +16,7 @@ class TurnipPriceBotService:
         # TODO: inject handler from arguments
         @self.client.event
         async def on_ready():
-            print('ready')
+            print("ready")
 
         @self.client.event
         async def on_message(message):

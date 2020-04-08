@@ -36,7 +36,7 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
     if mention_to_me is None:
         raise ValueError("not mention message is ignored")
     # remove mention string
-    command = content.replace('<@!{}>'.format(myself.id), ' ', -1)
+    command = content.replace("<@!{}>".format(myself.id), " ", -1)
     # zenkaku to hankaku
     command = jaconv.z2h(command, ascii=True)
     # downcase
@@ -46,7 +46,9 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
     return command
 
 
-def parse_update_command(command: str, current: datetime.datetime) -> (str, int):  # term, price
+def parse_update_command(
+    command: str, current: datetime.datetime
+) -> (str, int):  # term, price
     """
     example:
     - 午前 100
@@ -59,35 +61,35 @@ def parse_update_command(command: str, current: datetime.datetime) -> (str, int)
     """
     # read weekday
     weekday = None
-    wds = ['月', '火', '水', '木', '金', '土', '買値']
+    wds = ["月", "火", "水", "木", "金", "土", "買値"]
     for wd in wds:
         if wd in command:
             weekday = wd
             break
-    if '買' in command:
-        weekday = '買値'
+    if "買" in command:
+        weekday = "買値"
     if weekday is None:
         weekday = wds[current.weekday() % len(wds)]
 
     # read am. or pm.
     ampm = None
-    for am in ['am', '午前', 'ごぜん', 'gozen']:
+    for am in ["am", "午前", "ごぜん", "gozen"]:
         if am in command:
-            ampm = 'AM'
-    for pm in ['pm', 'ごご', 'ごご', 'gogo']:
+            ampm = "AM"
+    for pm in ["pm", "ごご", "ごご", "gogo"]:
         if pm in command:
-            ampm = 'PM'
+            ampm = "PM"
     if ampm is None:
-        ampm = 'AM' if current.hour < 12 else 'PM'
+        ampm = "AM" if current.hour < 12 else "PM"
 
-    if weekday == '買値':
+    if weekday == "買値":
         term: str = weekday
     else:
-        term: str = '{}{}'.format(weekday, ampm)
+        term: str = "{}{}".format(weekday, ampm)
 
     # read price
     price = None
-    m = re.search(r'[0-9]+', command)
+    m = re.search(r"[0-9]+", command)
     if m is not None:
         price = int(m.group())
 
@@ -103,13 +105,15 @@ class ChatService:
         logger.info("message received: %s" % message.content)
 
         # see https://stackoverflow.com/a/13287083
-        message_time: datetime.datetime = message.created_at.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+        message_time: datetime.datetime = message.created_at.replace(
+            tzinfo=datetime.timezone.utc
+        ).astimezone(tz=None)
         command = preprocess(self.user, message)
 
         if len(command) == 0:
             raise ChatError("やぁ☆")
 
-        m = re.search(r'^\+(.*)', command)
+        m = re.search(r"^\+(.*)", command)
         if m:
             body = m.group(1).strip()
             term, price = parse_update_command(body, message_time)
@@ -121,7 +125,6 @@ class ChatService:
             raise NotImplemented
 
         raise ChatError("わかりません")
-
 
     def echo(self, message) -> str:
         return message.content

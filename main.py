@@ -9,19 +9,24 @@ from bot import TurnipPriceBotService
 logger = logging.getLogger()
 coloredlogs.install(logger=logger)
 
+
 def parse_cmdargs():
     parser = optparse.OptionParser()
-    parser.add_option('-s', '--sheetkey', action="store", dest="sheetkey", type="string")
-    parser.add_option('-c', '--credential', action="store", dest="credential", type="string")
-    parser.add_option('--bot-token', action="store", dest="bottoken", type="string")
+    parser.add_option(
+        "-s", "--sheetkey", action="store", dest="sheetkey", type="string"
+    )
+    parser.add_option(
+        "-c", "--credential", action="store", dest="credential", type="string"
+    )
+    parser.add_option("--bot-token", action="store", dest="bottoken", type="string")
     opt, _ = parser.parse_args()
     return opt
 
 
 def load_testdata(filename):
     table = None
-    with open(filename, mode='r', newline='', encoding='utf-8') as f:
-        reader = csv.reader(f, delimiter='\t')
+    with open(filename, mode="r", newline="", encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter="\t")
         table = [row for row in reader]
         # return table # <- ok?
     return table
