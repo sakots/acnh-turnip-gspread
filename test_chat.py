@@ -44,15 +44,12 @@ class TestChatService(TestCase):
             self.assertEqual(service.recognize(message), expected)
 
         bad_cases = [
-            "",
-            "100 100",
-            "月曜AM 月曜AM",
-            "a b",
-            "100, 月曜AM",
-            "買値 100 100"]
+            "+",
+            "+月曜AM 月曜AM",
+            "+a b"]
 
         for c in bad_cases:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(chat.ChatError):
                 service.recognize(make_massage(c))
 
     def test_parse_update_command_monday(self):

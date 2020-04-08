@@ -97,6 +97,9 @@ def parse_update_command(
     if m is not None:
         price = int(m.group())
 
+    if price is None:
+        raise ChatError("カブ価を教えて")
+
     return term, price
 
 
