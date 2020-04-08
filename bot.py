@@ -21,18 +21,18 @@ class TurnipPriceBotService:
     def run(self):
         self.client.run(self.bot_token)
 
-    async def on_message(self, message):
-        mention = '<@!{}>'.format(self.client.user.id)
-
+    async def on_message(self, message: discord.Message):
         self.gs.fetch_table()
-        users = gspreads.users(self.gs.table)
-        chat = ChatService(mention)
+        chat = ChatService(self.client.user)
         request = chat.recognize(message)
         if request is None:
             return
 
-        # TODO: resolve user here
-        row, column = gspreads.find_position(self.gs.table, request.user, request.term)
+        print(request)
+        # TODO: enable to bind discord user id and user name on table by command
+        # TODO: currently use message author's nickname or name
+        user = message.author.nick or message.author.name
+        row, column = gspreads.find_position(self.gs.table, user, request.term)
         org_price = self.gs.table[row][column]
         self.gs.set(row + 1, column + 1, request.price)
         response = "org: {}, new: {}".format(org_price, request.price)

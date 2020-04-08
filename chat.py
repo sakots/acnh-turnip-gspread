@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional
 
+import discord
 import jaconv
 
 
@@ -12,10 +13,10 @@ class UpdateRequest:
     price: Optional[int]
 
 
-def preprocess(mention_str, message) -> str:
+def preprocess(myself: discord.User, message: discord.Message) -> str:
     """
     - ignore from bot or not mention message
-    - remove mention string
+    - remove mention string ('@bot')
     - zenkanku to hankaku for ascii chars
     - lowercase
     - strip
@@ -25,10 +26,11 @@ def preprocess(mention_str, message) -> str:
         raise ValueError("bot message is ignored")
     content: str = message.content.strip()
     # reject unless replay to me
-    if not content.startswith(mention_str):
+    mention_to_me = next(filter(lambda m: m.id == myself.id, message.mentions), None)
+    if mention_to_me is None:
         raise ValueError("not mention message is ignored")
     # remove mention string
-    command = content[len(mention_str):].strip()
+    command = content.replace('<@!{}>'.format(myself.id), ' ', -1)
     # zenkaku to hankaku
     command = jaconv.z2h(command, ascii=True)
     # downcase
@@ -87,15 +89,18 @@ def parse_update_command(command: str, current: datetime.datetime) -> (str, int)
 
 
 class ChatService:
-    def __init__(self, mention_str: str):
+    def __init__(self, user: discord.User):
         # TODO: use https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
-        self.mention_str = mention_str
+        self.user: discord.User = user
 
-    def recognize(self, message) -> UpdateRequest:
-        message_time: datetime.datetime = message.created_at
-        command = preprocess(self.mention_str, message)
+    def recognize(self, message: discord.Message) -> UpdateRequest:
+        message_time: datetime.datetime = message.created_at.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+        command = preprocess(self.user, message)
+
         if len(command) == 0:
             raise ValueError("empty body")
+
+        print("command: ", command)
 
         m = re.search(r'^\+(.*)', command)
         if m:

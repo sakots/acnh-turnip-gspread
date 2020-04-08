@@ -16,7 +16,7 @@ class GspreadService:
         self.table = self.sheet.get_all_values()
 
 
-def find_position(table, user, term) -> (int, int):
+def find_position(table: List[List[str]], user: str, term: str) -> (int, int):
     """
     returns the tuple (updated operation list, original history, new history)
     """

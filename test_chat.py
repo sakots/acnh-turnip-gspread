@@ -8,18 +8,27 @@ import jaconv
 import chat
 
 
-class TestChatService(TestCase):
-    @staticmethod
-    def make_massage(content: str):
-        message = Mock()
-        message.author.bot = False
-        message.content = '<!@123> {}'.format(content)
-        message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
-        return message
+def bot():
+    bot = Mock()
+    bot.id = 1234
+    bot.mention = '<@!1234>'
+    return bot
 
+
+def make_massage(content: str):
+    message = Mock()
+    message.author.bot = False
+    message.content = '<@!{}> {}'.format(bot().id, content)
+    message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
+    message.mentions = [bot()]
+    return message
+
+
+class TestChatService(TestCase):
     def test_recognize(self):
         # TODO: test 買値
-        service = chat.ChatService("<!@123>")
+        botuser = bot()
+        service = chat.ChatService(botuser)
 
         base = ['月曜午前', '月AM', '午前月曜', 'AM月', 'AM月　　']
         small = map(lambda x: x.lower(), base)
@@ -28,7 +37,7 @@ class TestChatService(TestCase):
         ok_cases = ['+100 {}'.format(c) for c in term] + ['+{} 100'.format(c) for c in term]
 
         for c in ok_cases:
-            message = self.make_massage(c)
+            message = make_massage(c)
             expected = chat.UpdateRequest('月AM', 100)
             self.assertEqual(service.recognize(message), expected)
 
@@ -36,7 +45,7 @@ class TestChatService(TestCase):
 
         for c in bad_cases:
             with self.assertRaises(ValueError):
-                service.recognize(self.make_massage(c))
+                service.recognize(make_massage(c))
 
     def test_parse_update_command_monday(self):
         current = datetime.datetime(2020, 4, 6, 11, 30, 0)
