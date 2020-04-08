@@ -1,12 +1,12 @@
 import discord
 
 from chat import ChatService
-from gspreads import GspreadService, find_position
+import gspreads
 
 
 class TurnipPriceBotService:
     def __init__(self, worksheet: str, sheet_index: int, credential: str, bot_token: str):
-        self.gs = GspreadService(worksheet, sheet_index, credential)
+        self.gs = gspreads.GspreadService(worksheet, sheet_index, credential)
         self.bot_token = bot_token
         self.client = discord.Client()
 
@@ -25,12 +25,13 @@ class TurnipPriceBotService:
         mention = '<@!{}>'.format(self.client.user.id)
 
         self.gs.fetch_table()
-        chat = ChatService(mention, self.gs.users())
+        users = gspreads.users(self.gs.table)
+        chat = ChatService(mention, users)
         request = chat.recognize(message)
         if request is None:
             return
 
-        row, column = find_position(self.gs.table, request.user, request.term)
+        row, column = gspreads.find_position(self.gs.table, request.user, request.term)
         org_price = self.gs.table[row][column]
         self.gs.set(row + 1, column + 1, request.price)
         response = "org: {}, new: {}".format(org_price, request.price)

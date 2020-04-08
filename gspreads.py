@@ -15,25 +15,6 @@ class GspreadService:
     def fetch_table(self):
         self.table = self.sheet.get_all_values()
 
-    def users(self) -> List[str]:
-        if not self.table:
-            raise AssertionError("call fetch_table method before")
-        cols = list(map(list, zip(*self.table)))
-        # Don't work unless the header string is 'なまえ', and there is no user with name 'なまえ.'
-        user_column_identifier = 'なまえ'
-        users_column = next(col for col in cols if user_column_identifier in col)
-        idx = users_column.index(user_column_identifier)
-        return users_column[idx + 1:]
-
-    def terms(self) -> List[str]:
-        if not self.table:
-            raise AssertionError("call fetch_table method before")
-        # See the comment of users
-        terms_row_identifier = '買値'
-        terms_row = next(row for row in self.table if terms_row_identifier in row)
-        idx = terms_row.index(terms_row_identifier)
-        return terms_row[idx:idx + 13]
-
 
 def find_position(table, user, term) -> (int, int):
     """
@@ -64,3 +45,29 @@ def get_sheet(worksheet: str, sheetindex: int, credential: str) -> gspread.Works
     worksheets = wks.worksheets()
     return worksheets[sheetindex]
 
+
+def users(table: List[List[str]]) -> List[str]:
+    """
+    find user list from table
+    """
+    if not table:
+        raise AssertionError("call fetch_table method before")
+    cols = list(map(list, zip(*table)))
+    # don't work unless the header string is 'なまえ', and there is no user with name 'なまえ.'
+    user_column_identifier = 'なまえ'
+    users_column = next(col for col in cols if user_column_identifier in col)
+    idx = users_column.index(user_column_identifier)
+    return users_column[idx + 1:]
+
+
+def terms(table: List[List[str]]) -> List[str]:
+    """
+    find term list from table
+    """
+    if not table:
+        raise AssertionError("call fetch_table method before")
+    # see the comment of users
+    terms_row_identifier = '買値'
+    terms_row = next(row for row in table if terms_row_identifier in row)
+    idx = terms_row.index(terms_row_identifier)
+    return terms_row[idx:idx + 13]
