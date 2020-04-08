@@ -1,5 +1,4 @@
 import datetime
-import itertools
 import re
 from dataclasses import dataclass
 from typing import List, Optional
@@ -11,47 +10,17 @@ import jaconv
 class UpdateRequest:
     user: str
     term: str
-    price: int
-
-
-def datetime_to_term(dt: datetime.datetime) -> str:
-    name = [char for char in '月火水木金土'] + ['買値']
-    idx: int = dt.weekday()
-    weekday = name[idx]
-    ampm: str
-    if idx != 6:
-        ampm = 'AM' if dt.hour < 12 else 'PM'
-    else:
-        ampm = ''
-    return '{}{}'.format(weekday, ampm)
-
-
-def read_term(s: str) -> Optional[str]:
-    # normalize into '月AM' or '買値' format
-    t = jaconv.z2h(s, ascii=True)
-    t = t.replace('曜日', '').replace('曜', '')
-    t = t.replace('午前', 'AM').replace('午後', 'PM')
-    t = t.upper()
-    if t.startswith('AM') or t.startswith('PM'):
-        t = t[2:] + t[:2]
-
-    wd = [c for c in '月火水木金']
-    ampm = ['AM', 'PM']
-    allowed = ['買値'] + ['{}{}'.format(a, b) for a, b in itertools.product(wd, ampm)]
-    if t in allowed:
-        return t
-    return None
-
-
-def read_price(price: str) -> Optional[int]:
-    price = re.sub(r'ベル$', '', price)
-    price = jaconv.z2h(price)
-    if re.fullmatch(r'[0-9]+', price):
-        return int(jaconv.z2h(price, ascii=True))
-    return None
+    price: Optional[int]
 
 
 def preprocess(mention_str, message) -> str:
+    """
+    - ignore from bot or not mention message
+    - remove mention string
+    - zenkanku to hankaku for ascii chars
+    - lowercase
+    - strip
+    """
     # reject message from bot
     if message.author.bot:
         raise ValueError("bot message is ignored")
@@ -61,7 +30,61 @@ def preprocess(mention_str, message) -> str:
         raise ValueError("not mention message is ignored")
     # remove mention string
     command = content[len(mention_str):].strip()
+    # zenkaku to hankaku
+    command = jaconv.z2h(command, ascii=True)
+    # downcase
+    command = command.lower()
+    # strip
+    command = command.strip()
     return command
+
+
+def parse_update_command(command: str, current: datetime.datetime) -> (str, int):  # term, price
+    """
+    example:
+    - 午前 100
+    - 100 午前
+    - 100 am
+    - 100
+    - 月 100
+    - 買い 100
+    - 買値 100
+    """
+    # read weekday
+    weekday = None
+    wds = ['月', '火', '水', '木', '金', '土', '買値']
+    for wd in wds:
+        if wd in command:
+            weekday = wd
+            break
+    if '買' in command:
+        weekday = '買値'
+    if weekday is None:
+        weekday = wds[current.weekday() % len(wds)]
+
+    # read am. or pm.
+    ampm = None
+    for am in ['am', '午前', 'ごぜん', 'gozen']:
+        if am in command:
+            ampm = 'AM'
+    for pm in ['pm', 'ごご', 'ごご', 'gogo']:
+        if pm in command:
+            ampm = 'PM'
+    if ampm is None:
+        ampm = 'AM' if current.hour < 12 else 'PM'
+
+    if weekday == '買値':
+        term: str = weekday
+    else:
+        term: str = '{}{}'.format(weekday, ampm)
+
+    # read price
+    price = None
+    m = re.search(r'[0-9]+', command)
+    if m is not None:
+        price = int(m.group())
+
+    return term, price
 
 
 class ChatService:
@@ -81,33 +104,28 @@ class ChatService:
         100 木曜午前
         """
 
-        name: str = message.author.nick or message.author.name  # ニックネーム優先
-        if name not in self.users_hint:
+        # nickname is preferred
+        user: str = message.author.nick or message.author.name
+        if user not in self.users_hint:
             raise ValueError("unknown user")
-
         message_time: datetime.datetime = message.created_at
 
         command = preprocess(self.mention_str, message)
+        if len(command) == 0:
+            raise ValueError("empty body")
 
-        args: List[str] = command.split()  # 全角スペースもうまくsplitされる
-        length = len(args)
-        if length == 0:
-            raise ValueError("no argument")
-        if length == 1:
-            # e.g. '100'
-            term: str = datetime_to_term(message_time)
-            price: int = read_price(args[0])
-            return UpdateRequest(name, term, price)
-        if length == 2:
-            # e.g. '木曜午前 100'
-            # e.g. '100 木曜午前'
-            for t, p in itertools.permutations(args):
-                rest = read_term(t)
-                resp = read_price(p)
-                if (rest is not None) and (resp is not None):
-                    return UpdateRequest(name, rest, resp)
-            raise ValueError("cannot infer argument type")
-        raise ValueError("too many arguments")
+        m = re.search(r'^\+(.*)', command)
+        if m:
+            body = m.group(1).strip()
+            term, price = parse_update_command(body, message_time)
+            return UpdateRequest(user, term, price)
+
+        m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
+        if m:
+            body = m.group(2).strip()
+            raise NotImplemented
+
+        raise ValueError("unknown command")
 
 
     def echo(self, message) -> str:
