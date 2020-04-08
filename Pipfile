@@ -10,6 +10,7 @@ oauth2client = "*"
 gspread = "*"
 google-auth = "*"
 discord-py = "*"
+jaconv = "*"
 
 [requires]
 python_version = "3.8"

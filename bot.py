@@ -1,5 +1,4 @@
 import discord
-import time
 
 from chat import ChatService
 from gspreads import GspreadService, find_position
@@ -26,14 +25,14 @@ class TurnipPriceBotService:
         mention = '<@!{}>'.format(self.client.user.id)
 
         self.gs.fetch_table()
-        chat = ChatService(mention, self.gs.users(), self.gs.terms(), time.time())
-        user, term, new_price = chat.recognize(message)
-        if not user:
+        chat = ChatService(mention, self.gs.users())
+        request = chat.recognize(message)
+        if request is None:
             return
-        print(user, term, new_price)
-        row, column = find_position(self.gs.table, user, term)
+
+        row, column = find_position(self.gs.table, request.user, request.term)
         org_price = self.gs.table[row][column]
-        self.gs.set(row + 1, column + 1, new_price)
-        response = "org: {}, new: {}".format(org_price, new_price)
+        self.gs.set(row + 1, column + 1, request.price)
+        response = "org: {}, new: {}".format(org_price, request.price)
         if response:
             await message.channel.send(response)

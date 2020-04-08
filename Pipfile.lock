@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "95f977c277a8f93dd7e205305a75d5904089221c2868208c7fa553e20a4a052f"
+            "sha256": "54083cadd21bf731e6518fe221152b1f64b6c41c64e12dca5d8538e507b31426"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -104,6 +104,13 @@
                 "sha256:a068a21ceac8a4d63dbfd964670474107f541babbd2250d61922f029858365fa"
             ],
             "version": "==2.9"
+        },
+        "jaconv": {
+            "hashes": [
+                "sha256:2ccdf768da20d55f30e8801e5e2e27783aae1bb29b890e503e1124134d6d09c9"
+            ],
+            "index": "pypi",
+            "version": "==0.2.4"
         },
         "multidict": {
             "hashes": [
