@@ -2,7 +2,7 @@ import discord
 
 from chat import ChatService, ChatError
 import gspreads
-from main import logger
+from logger import logger
 
 
 class TurnipPriceBotService:
@@ -53,7 +53,7 @@ class TurnipPriceBotService:
             self.gs.set(row + 1, column + 1, request.price)
         except Exception as e:
             logger.error(e, exc_info=True)
-            await message.channel.send("Spreadsheet書き込みエラー")
+            await message.channel.send("Spreadsheet 書き込みエラー")
             return
 
         response = "org: {}, new: {}".format(org_price, request.price)

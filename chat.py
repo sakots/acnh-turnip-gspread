@@ -6,7 +6,7 @@ from typing import Optional
 import discord
 import jaconv
 
-from main import logger
+from logger import logger
 
 
 @dataclass
