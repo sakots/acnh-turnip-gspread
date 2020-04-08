@@ -12,7 +12,6 @@ class TestChatService(TestCase):
     @staticmethod
     def make_massage(content: str):
         message = Mock()
-        message.author.nick = 'alice'
         message.author.bot = False
         message.content = '<!@123> {}'.format(content)
         message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
@@ -20,7 +19,7 @@ class TestChatService(TestCase):
 
     def test_recognize(self):
         # TODO: test 買値
-        service = chat.ChatService("<!@123>", ['alice', 'bob'])
+        service = chat.ChatService("<!@123>")
 
         base = ['月曜午前', '月AM', '午前月曜', 'AM月', 'AM月　　']
         small = map(lambda x: x.lower(), base)
@@ -30,7 +29,7 @@ class TestChatService(TestCase):
 
         for c in ok_cases:
             message = self.make_massage(c)
-            expected = chat.UpdateRequest('alice', '月AM', 100)
+            expected = chat.UpdateRequest('月AM', 100)
             self.assertEqual(service.recognize(message), expected)
 
         bad_cases = ['', '100 100', '月曜AM 月曜AM', 'a b', '100, 月曜AM', '買値 100 100']

@@ -26,11 +26,12 @@ class TurnipPriceBotService:
 
         self.gs.fetch_table()
         users = gspreads.users(self.gs.table)
-        chat = ChatService(mention, users)
+        chat = ChatService(mention)
         request = chat.recognize(message)
         if request is None:
             return
 
+        # TODO: resolve user here
         row, column = gspreads.find_position(self.gs.table, request.user, request.term)
         org_price = self.gs.table[row][column]
         self.gs.set(row + 1, column + 1, request.price)

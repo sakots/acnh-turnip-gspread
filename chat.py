@@ -8,7 +8,6 @@ import jaconv
 
 @dataclass
 class UpdateRequest:
-    user: str
     term: str
     price: Optional[int]
 
@@ -88,9 +87,9 @@ def parse_update_command(command: str, current: datetime.datetime) -> (str, int)
 
 
 class ChatService:
-    def __init__(self, mention_str: str, users_hint: List[str]):
+    def __init__(self, mention_str: str):
+        # TODO: use https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
         self.mention_str = mention_str
-        self.users_hint = users_hint
 
     def recognize(self, message) -> UpdateRequest:
         """
@@ -103,13 +102,7 @@ class ChatService:
         am木 100
         100 木曜午前
         """
-
-        # nickname is preferred
-        user: str = message.author.nick or message.author.name
-        if user not in self.users_hint:
-            raise ValueError("unknown user")
         message_time: datetime.datetime = message.created_at
-
         command = preprocess(self.mention_str, message)
         if len(command) == 0:
             raise ValueError("empty body")
@@ -118,7 +111,7 @@ class ChatService:
         if m:
             body = m.group(1).strip()
             term, price = parse_update_command(body, message_time)
-            return UpdateRequest(user, term, price)
+            return UpdateRequest(term, price)
 
         m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
         if m:
