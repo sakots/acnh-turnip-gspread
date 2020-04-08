@@ -139,5 +139,7 @@ dmypy.json
 cython_debug/
 
 
-## this repository specidic
+## this repository specific
 /.idea
+/*.json
+/*.tsv
