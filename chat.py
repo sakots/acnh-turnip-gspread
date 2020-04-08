@@ -32,7 +32,11 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
         raise ValueError("bot message is ignored")
     content: str = message.content.strip()
     # reject unless replay to me
-    mention_to_me = next(filter(lambda m: m.id == myself.id, message.mentions), None)
+    mention_to_me = next(
+        filter(
+            lambda m: m.id == myself.id,
+            message.mentions),
+        None)
     if mention_to_me is None:
         raise ValueError("not mention message is ignored")
     # remove mention string
@@ -98,7 +102,8 @@ def parse_update_command(
 
 class ChatService:
     def __init__(self, user: discord.User):
-        # TODO: use https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
+        # TODO: use
+        # https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
         self.user: discord.User = user
 
     def recognize(self, message: discord.Message) -> UpdateRequest:

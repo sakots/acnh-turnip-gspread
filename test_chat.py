@@ -43,7 +43,13 @@ class TestChatService(TestCase):
             expected = chat.UpdateRequest("月AM", 100)
             self.assertEqual(service.recognize(message), expected)
 
-        bad_cases = ["", "100 100", "月曜AM 月曜AM", "a b", "100, 月曜AM", "買値 100 100"]
+        bad_cases = [
+            "",
+            "100 100",
+            "月曜AM 月曜AM",
+            "a b",
+            "100, 月曜AM",
+            "買値 100 100"]
 
         for c in bad_cases:
             with self.assertRaises(ValueError):

@@ -41,12 +41,16 @@ def find_position(table: List[List[str]], user: str, term: str) -> (int, int):
     return row_id, column_id
 
 
-def get_sheet(worksheet: str, sheetindex: int, credential: str) -> gspread.Worksheet:
+def get_sheet(
+        worksheet: str,
+        sheetindex: int,
+        credential: str) -> gspread.Worksheet:
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive",
     ]
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        credential, scope)
     gc = gspread.authorize(credentials)
     wks = gc.open_by_key(worksheet)
     worksheets = wks.worksheets()
@@ -60,11 +64,12 @@ def users(table: List[List[str]]) -> List[str]:
     if not table:
         raise AssertionError("call fetch_table method before")
     cols = list(map(list, zip(*table)))
-    # don't work unless the header string is 'なまえ', and there is no user with name 'なまえ.'
+    # don't work unless the header string is 'なまえ', and there is no user with
+    # name 'なまえ.'
     user_column_identifier = "なまえ"
     users_column = next(col for col in cols if user_column_identifier in col)
     idx = users_column.index(user_column_identifier)
-    return users_column[idx + 1 :]
+    return users_column[idx + 1:]
 
 
 def terms(table: List[List[str]]) -> List[str]:
@@ -77,4 +82,4 @@ def terms(table: List[List[str]]) -> List[str]:
     terms_row_identifier = "買値"
     terms_row = next(row for row in table if terms_row_identifier in row)
     idx = terms_row.index(terms_row_identifier)
-    return terms_row[idx : idx + 13]
+    return terms_row[idx: idx + 13]

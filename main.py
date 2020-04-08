@@ -18,7 +18,11 @@ def parse_cmdargs():
     parser.add_option(
         "-c", "--credential", action="store", dest="credential", type="string"
     )
-    parser.add_option("--bot-token", action="store", dest="bottoken", type="string")
+    parser.add_option(
+        "--bot-token",
+        action="store",
+        dest="bottoken",
+        type="string")
     opt, _ = parser.parse_args()
     return opt
 

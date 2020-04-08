@@ -47,7 +47,8 @@ class TurnipPriceBotService:
         # TODO: currently use message author's nickname or name
         try:
             user = message.author.nick or message.author.name
-            row, column = gspreads.find_position(self.gs.table, user, request.term)
+            row, column = gspreads.find_position(
+                self.gs.table, user, request.term)
             org_price = self.gs.table[row][column]
             self.gs.set(row + 1, column + 1, request.price)
         except Exception as e:
