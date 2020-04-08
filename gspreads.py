@@ -3,6 +3,8 @@ from typing import List
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+from chat import ChatError
+
 
 class GspreadService:
     def __init__(self, sheetkey: str, sheetindex: int, credential: str):
@@ -28,10 +30,10 @@ def find_position(table: List[List[str]], user: str, term: str) -> (int, int):
 
     # find target indices of update
     if user not in users:
-        raise ValueError('ユーザー {} が見つかりません'.format(user))
+        raise ChatError('ユーザー {} が見つかりません'.format(user))
     row_id = users.index(user)
     if term not in terms:
-        raise ValueError('期間 {} が見つかりません'.format(term))
+        raise ChatError('期間 {} が見つかりません'.format(term))
     column_id = terms.index(term)
 
     return row_id, column_id

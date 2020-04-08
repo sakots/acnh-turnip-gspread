@@ -1,8 +1,13 @@
 import csv
+import logging
 import optparse
+
+import coloredlogs
 
 from bot import TurnipPriceBotService
 
+logger = logging.getLogger()
+coloredlogs.install(logger=logger)
 
 def parse_cmdargs():
     parser = optparse.OptionParser()

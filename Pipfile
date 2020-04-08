@@ -11,6 +11,7 @@ gspread = "*"
 google-auth = "*"
 discord-py = "*"
 jaconv = "*"
+coloredlogs = "*"
 
 [requires]
 python_version = "3.8"

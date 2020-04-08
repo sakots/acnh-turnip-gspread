@@ -1,16 +1,22 @@
 import datetime
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import discord
 import jaconv
+
+from main import logger
 
 
 @dataclass
 class UpdateRequest:
     term: str
     price: Optional[int]
+
+
+class ChatError(Exception):
+    pass
 
 
 def preprocess(myself: discord.User, message: discord.Message) -> str:
@@ -94,13 +100,14 @@ class ChatService:
         self.user: discord.User = user
 
     def recognize(self, message: discord.Message) -> UpdateRequest:
+        logger.info("message received: %s" % message.content)
+
+        # see https://stackoverflow.com/a/13287083
         message_time: datetime.datetime = message.created_at.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
         command = preprocess(self.user, message)
 
         if len(command) == 0:
-            raise ValueError("empty body")
-
-        print("command: ", command)
+            raise ChatError("やぁ☆")
 
         m = re.search(r'^\+(.*)', command)
         if m:
@@ -113,7 +120,7 @@ class ChatService:
             body = m.group(2).strip()
             raise NotImplemented
 
-        raise ValueError("unknown command")
+        raise ChatError("わかりません")
 
 
     def echo(self, message) -> str:
