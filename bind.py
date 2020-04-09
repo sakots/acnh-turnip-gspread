@@ -3,7 +3,7 @@ from typing import Optional
 import pymongo
 
 
-class MongoNameIdBindService:
+class BindService:
     """
     bind id to name. it's injective, not one-to-one
     """

@@ -1,6 +1,9 @@
 import csv
 import optparse
 
+import pymongo_inmemory
+
+from bind import BindService
 from bot import TurnipPriceBotService
 
 
@@ -34,8 +37,12 @@ def main():
     opt = parse_cmdargs()
     sheetkey, credential, bottoken = opt.sheetkey, opt.credential, opt.bottoken
     print(sheetkey, credential, bottoken)
-    bot = TurnipPriceBotService(sheetkey, 0, credential, bottoken)
-    bot.run()
+
+    with pymongo_inmemory.MongoClient() as client:
+        collection = client['my_db']['user_bindings']
+        binder = BindService(collection)
+        bot = TurnipPriceBotService(sheetkey, 0, credential, bottoken, binder)
+        bot.run()
 
     # prod = False
     # if prod:

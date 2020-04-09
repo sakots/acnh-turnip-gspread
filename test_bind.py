@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import pymongo_inmemory
 
-from bind import MongoNameIdBindService
+from bind import BindService
 
 
 class TestMongoNameIdBindService(TestCase):
@@ -11,7 +11,7 @@ class TestMongoNameIdBindService(TestCase):
         db = client['testdb']
         collection = db['user_bindings']
 
-        binds = MongoNameIdBindService(collection)
+        binds = BindService(collection)
 
         self.assertEqual(binds.find_name(1), None)
         binds.bind(1, "a")

@@ -9,10 +9,20 @@ import jaconv
 from logger import logger
 
 
+# TODO: move request classes to new file
+class Request:
+    pass
+
+
 @dataclass
-class UpdateRequest:
+class UpdateRequest(Request):
     term: str
     price: Optional[int]
+
+
+@dataclass
+class BindRequest(Request):
+    name: str
 
 
 class ChatError(Exception):
@@ -109,7 +119,7 @@ class ChatService:
         # https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
         self.user: discord.User = user
 
-    def recognize(self, message: discord.Message) -> UpdateRequest:
+    def recognize(self, message: discord.Message) -> Request:
         logger.info("message received: %s" % message.content)
 
         # see https://stackoverflow.com/a/13287083
@@ -130,7 +140,7 @@ class ChatService:
         m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
         if m:
             body = m.group(2).strip()
-            raise NotImplemented
+            return BindRequest(body)
 
         raise ChatError("わかりません")
 
