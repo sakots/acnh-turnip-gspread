@@ -46,7 +46,6 @@ class TurnipPriceBotService:
             return
 
         author: discord.Member = message.author
-        # TODO: check author.id is accessible. should use author.name?
         if isinstance(request, UpdateRequest):
             try:
                 name = self.binder.find_name(author.id)
