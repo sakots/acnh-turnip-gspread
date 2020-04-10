@@ -5,6 +5,7 @@ import pymongo_inmemory
 
 from bind import BindService
 from bot import TurnipPriceBotService
+from logger import logger
 
 
 def parse_cmdargs():
@@ -36,7 +37,7 @@ def load_testdata(filename):
 def main():
     opt = parse_cmdargs()
     sheetkey, credential, bottoken = opt.sheetkey, opt.credential, opt.bottoken
-    print(sheetkey, credential, bottoken)
+    logger.info("command line option: ", opt)
 
     with pymongo_inmemory.MongoClient() as client:
         collection = client['my_db']['user_bindings']
@@ -51,7 +52,6 @@ def main():
     # else:
     #     table = load_testdata('./testdata.tsv')
     # oplist, org, new = update(table, user, term, price)
-    # print(oplist, org, new)
 
 
 if __name__ == "__main__":

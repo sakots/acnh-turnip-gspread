@@ -1,7 +1,7 @@
 import discord
 
 from bind import BindService
-from chat import ChatService, ChatError, UpdateRequest, BindRequest, Request
+from chat import ChatService, SimplePostRequest, UpdateRequest, BindRequest, ParseResult, WhoAmIRequest, IgnorableRequest
 import gspreads
 from logger import logger
 
@@ -18,7 +18,7 @@ class TurnipPriceBotService:
         # TODO: inject handler from arguments
         @self.client.event
         async def on_ready():
-            print("ready")
+            logger.info("ready")
 
         @self.client.event
         async def on_message(message):
@@ -32,21 +32,16 @@ class TurnipPriceBotService:
         chat = ChatService(self.client.user)
 
         try:
-            request: Request = chat.recognize(message)
-        except ChatError as e:
-            await message.channel.send(e)
-            return
-        except NotImplemented as e:
-            logger.info(e)
-            await message.channel.send("実装されていません")
-            return
-        except AssertionError as e:
-            logger.error(e, exc_info=True)
-            await message.channel.send("チャットエラー")
+            request: ParseResult = chat.recognize(message)
+        except Exception as e:
+            logger.error("unknown error: ", e, exc_info=True)
             return
 
         author: discord.Member = message.author
-        if isinstance(request, UpdateRequest):
+        if isinstance(request, SimplePostRequest):
+            await message.channel.send(request.content)
+            return
+        elif isinstance(request, UpdateRequest):
             try:
                 name = self.binder.find_name(author.id)
                 row, column = gspreads.find_position(
@@ -68,3 +63,17 @@ class TurnipPriceBotService:
                 return
             response = "覚えました: {} は {}".format(author, request.name)
             await message.channel.send(response)
+        elif isinstance(request, WhoAmIRequest):
+            try:
+                name = self.binder.find_name(author.id)
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                await message.channel.send("名前を調べる際にエラーが発生しました")
+                return
+            if name is not None:
+                response = "あなたは {}\n{}".format(author, name)
+            else:
+                response = "あなたは {}\n別名は知りません".format(author)
+            await message.channel.send(response)
+        elif isinstance(request, IgnorableRequest):
+            pass

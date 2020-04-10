@@ -1,7 +1,6 @@
 import datetime
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 import discord
 import jaconv
@@ -10,23 +9,33 @@ from logger import logger
 
 
 # TODO: move request classes to new file
-class Request:
+class ParseResult:
     pass
 
 
 @dataclass
-class UpdateRequest(Request):
+class UpdateRequest(ParseResult):
     term: str
-    price: Optional[int]
+    price: int
 
 
 @dataclass
-class BindRequest(Request):
+class BindRequest(ParseResult):
     name: str
 
 
-class ChatError(Exception):
+class WhoAmIRequest(ParseResult):
     pass
+
+
+@dataclass
+class SimplePostRequest(ParseResult):
+    content: str
+
+
+@dataclass
+class IgnorableRequest(ParseResult):
+    reason: str
 
 
 def preprocess(myself: discord.User, message: discord.Message) -> str:
@@ -62,7 +71,7 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
 
 def parse_update_command(
     command: str, current: datetime.datetime
-) -> (str, int):  # term, price
+) -> ParseResult:
     """
     example:
     - 午前 100
@@ -108,9 +117,9 @@ def parse_update_command(
         price = int(m.group())
 
     if price is None:
-        raise ChatError("カブ価を教えて")
+        return SimplePostRequest("カブ価を教えて")
 
-    return term, price
+    return UpdateRequest(term, price)
 
 
 class ChatService:
@@ -119,30 +128,35 @@ class ChatService:
         # https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
         self.user: discord.User = user
 
-    def recognize(self, message: discord.Message) -> Request:
+    def recognize(self, message: discord.Message) -> ParseResult:
         logger.info("message received: %s" % message.content)
 
         # see https://stackoverflow.com/a/13287083
         message_time: datetime.datetime = message.created_at.replace(
             tzinfo=datetime.timezone.utc
         ).astimezone(tz=None)
-        command = preprocess(self.user, message)
+
+        try:
+            command = preprocess(self.user, message)
+        except ValueError as e:
+            logger.info(e)
+            return IgnorableRequest(str(e))
 
         if len(command) == 0:
-            raise ChatError("やぁ☆")
+            return SimplePostRequest("やぁ☆")
 
         m = re.search(r"^\+(.*)", command)
         if m:
             body = m.group(1).strip()
-            term, price = parse_update_command(body, message_time)
-            return UpdateRequest(term, price)
+            return parse_update_command(body, message_time)
 
         m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
         if m:
-            body = m.group(2).strip()
-            return BindRequest(body)
+            name = m.group(2).strip()
+            return BindRequest(name)
 
-        raise ChatError("わかりません")
+        m = re.search(r"^who", command)
+        if m:
+            return WhoAmIRequest()
 
-    def echo(self, message) -> str:
-        return message.content
+        return SimplePostRequest("わかりません")
