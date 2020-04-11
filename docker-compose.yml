@@ -6,6 +6,13 @@ services:
       context: .
       dockerfile: Dockerfile
     entrypoint: ./entrypoint.sh
+    environment:
+      TZ: Asia/Tokyo
+    logging:
+      driver: json-file
+      options:
+        max-size: "1g"
+        max-file: "10"
   mongo:
     image: mongo:4.2.5-bionic
     restart: always
@@ -14,6 +21,12 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
       MONGO_APP_USERNAME: $MONGO_APP_USERNAME
       MONGO_APP_PASSWORD: $MONGO_APP_PASSWORD
+      TZ: Asia/Tokyo
+    logging:
+      driver: json-file
+      options:
+        max-size: "1g"
+        max-file: "10"
     ports:
       - 27017:27017
     volumes:
