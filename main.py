@@ -12,10 +12,13 @@ from bind import BindService
 from bot import TurnipPriceBotService
 from logger import logger
 
+
 def load_config():
     # load normal options from command line options
     parser = OptionParser()
-    parser.add_option("--config", dest="config", help="configuration file path", metavar="FILE")
+    parser.add_option(
+        "--config", dest="config", help="configuration file path", metavar="FILE"
+    )
     option, _ = parser.parse_args()
     config = yaml.load(open(option.config, "r").read(), Loader=yaml.FullLoader)
 
@@ -45,19 +48,29 @@ def main():
     if config.get("mongodb_use_inmemory") or False:
         logger.info("use pymongo_inmemory client")
         import pymongo_inmemory
+
         mongodb = pymongo_inmemory.MongoClient()
     else:
         logger.info("create pymongo client")
         username = urllib.parse.quote_plus(config["mongo_app_username"])
         password = urllib.parse.quote_plus(config["mongo_app_password"])
         import pymongo
-        mongodb = pymongo.MongoClient(config["mongo_host"], int(config["mongo_port"]), username=username, password=password, authSource="admin")
+
+        mongodb = pymongo.MongoClient(
+            config["mongo_host"],
+            int(config["mongo_port"]),
+            username=username,
+            password=password,
+            authSource="admin",
+        )
     collection = mongodb[config["mongo_database"]][config["mongo_collection"]]
 
     # bind
     bind_service = BindService(collection)
 
-    bot_service = TurnipPriceBotService(config["discord_bot_token"], gspread_service, bind_service)
+    bot_service = TurnipPriceBotService(
+        config["discord_bot_token"], gspread_service, bind_service
+    )
     bot_service.run()
 
     mongodb.close()

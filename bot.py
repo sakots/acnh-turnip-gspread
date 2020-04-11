@@ -43,17 +43,29 @@ class TurnipPriceBotService:
         self.client.run(self.bot_token)
 
     async def on_message(self, message: discord.Message):
-        logger.info("message received. content: %s, id: %s, details: %s", message.content, message.id, message)
+        logger.info(
+            "message received. content: %s, id: %s, details: %s",
+            message.content,
+            message.id,
+            message,
+        )
         chat_service = ChatService(self.client.user)
         try:
             request: ParseResult = chat_service.recognize(message)
         except Exception as e:
-            logger.error("unknown error occurred. error: %s, message id %s", e, message.id, exc_info=True)
+            logger.error(
+                "unknown error occurred. error: %s, message id %s",
+                e,
+                message.id,
+                exc_info=True,
+            )
             return
         response = self.handle_request(message, request)
         if response is not None:
             await message.channel.send(response)
-            logger.info("message sent. content: %s, in reply to %s", response, message.id)
+            logger.info(
+                "message sent. content: %s, in reply to %s", response, message.id
+            )
 
     # TODO: extract to class RequestHandleService
     def handle_request(
@@ -86,7 +98,9 @@ class TurnipPriceBotService:
             logger.info("user not found on table. user: %s", author)
             return "テーブルからあなたの情報が見つかりません"
         if not isinstance(result, table.Found):
-            logger.info("user not found on table. user: %s, request: %s", author, request)
+            logger.info(
+                "user not found on table. user: %s, request: %s", author, request
+            )
             return "テーブルのどこに書けばいいか分かりません"
         row, column = result.user_row, result.term_column
         org_price = raw_table[row][column]
@@ -97,7 +111,13 @@ class TurnipPriceBotService:
         except Exception as e:
             logger.error("failed to write to table. error: %s", e, exc_info=True)
             return "テーブルに書き込めませんでした"
-        logger.info("successfully updated. row: %s, column: %s, %s -> %s", row, column, org_price, request.price)
+        logger.info(
+            "successfully updated. row: %s, column: %s, %s -> %s",
+            row,
+            column,
+            org_price,
+            request.price,
+        )
         return "org: {}, new: {}".format(org_price, request.price)
 
     def handle_bind_request(self, author: discord.Member, request: BindRequest):
@@ -119,5 +139,7 @@ class TurnipPriceBotService:
             logger.info("successfully found name. author: %s, name: %s", author, name)
             return "あなたは {}\nスプレッドシートでの名前は {}".format(author, name)
         else:
-            logger.info("successfully found name but binding not found. author: %s", author)
+            logger.info(
+                "successfully found name but binding not found. author: %s", author
+            )
             return "あなたは {}\nスプレッドシートには登録されていません".format(author)
