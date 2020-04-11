@@ -56,17 +56,17 @@ class TurnipPriceTableViewService:
 
         return Found(columns[column_id].index(user), rows[row_id].index(term))
 
-    def find_terms_row(self) -> Optional[int]:
-        terms_row_identifier = "買値"
-        return next(
-            (i for i, row in enumerate(self.table) if (terms_row_identifier in row)),
-            None,
-        )
-
     def find_users_column(self) -> Optional[int]:
         user_column_identifier = "なまえ"
         return next(
             (i for i, col in enumerate(self.trans) if (user_column_identifier in col)),
+            None,
+        )
+
+    def find_terms_row(self) -> Optional[int]:
+        terms_row_identifier = "買値"
+        return next(
+            (i for i, row in enumerate(self.table) if (terms_row_identifier in row)),
             None,
         )
 

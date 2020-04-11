@@ -21,18 +21,17 @@ from table import TurnipPriceTableViewService
 class TurnipPriceBotService:
     def __init__(
         self,
-        worksheet: str,
-        sheet_index: int,
-        credential: str,
+        gspread_service: gspreads.GspreadService,
         bot_token: str,
         binder: BindService,
     ):
-        self.gs = gspreads.GspreadService(worksheet, sheet_index, credential)
+        self.gspread_service = gspread_service
+        self.bind_service = binder
+
         self.bot_token = bot_token
         self.client = discord.Client()
-        self.binder = binder
-
         # TODO: inject handler from arguments
+
         @self.client.event
         async def on_ready():
             logger.info("ready")
@@ -82,33 +81,37 @@ class TurnipPriceBotService:
     def handle_update_request(
         self, author: discord.Member, request: UpdateRequest
     ) -> str:
-        table_service = TurnipPriceTableViewService(self.gs.get_table())
-        name = self.binder.find_name(author.id)
+        sheet_index = 0
+        raw_table = self.gspread_service.get_table(sheet_index)
+        table_service = TurnipPriceTableViewService(raw_table)
+        name = self.bind_service.find_name(author.id)
         result = table_service.find_position(name, request.term)
         if isinstance(result, table.UserNotFound):
             return "テーブルからあなたの情報が見つかりません"
         if not isinstance(result, table.Found):
             return "テーブルのどこに書けばいいか分かりません"
         row, column = result.user_row, result.term_column
-        org_price = self.gs.table[row][column]
+        org_price = raw_table[row][column]
         try:
-            self.gs.update_cell(row + 1, column + 1, request.price)
+            self.gspread_service.update_cell(sheet_index, row + 1, column + 1, request.price)
         except Exception as e:
-            logger.error("failed to write to table", e, exc_info=True)
+            logger.error("failed to write to table")
+            logger.error(e, exc_info=True)
             return "テーブルに書き込めませんでした"
         return "org: {}, new: {}".format(org_price, request.price)
 
     def handle_bind_request(self, author: discord.Member, request: BindRequest):
         try:
-            self.binder.bind(author.id, request.name)
+            self.bind_service.bind(author.id, request.name)
         except Exception as e:
-            logger.error("failed to bind user", e, exc_info=True)
+            logger.error("failed to bind user")
+            logger.error(e, exc_info=True)
             return "名前を覚える際にエラーが発生しました"
         return "覚えました: {} は {}".format(author, request.name)
 
     def handle_who_am_i_request(self, author: discord.Member):
         try:
-            name = self.binder.find_name(author.id)
+            name = self.bind_service.find_name(author.id)
         except Exception as e:
             logger.error(e, exc_info=True)
             return "あなたは {}\nスプレッドシートでの名前を調べる際にエラーが発生しました".format(author)

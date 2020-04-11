@@ -2,6 +2,7 @@ import optparse
 
 import pymongo_inmemory
 
+import gspreads
 from bind import BindService
 from bot import TurnipPriceBotService
 from logger import logger
@@ -9,23 +10,25 @@ from logger import logger
 
 def main():
     opt = parse_option()
-    sheetkey, credential, bottoken = opt.sheetkey, opt.credential, opt.bottoken
-    logger.info("command line option: ", opt)
+    sheet, credential, bottoken = opt.sheetkey, opt.credential, opt.bottoken
+    logger.info(opt)
+
+    gspread_service = gspreads.GspreadService(sheet, credential)
 
     with pymongo_inmemory.MongoClient() as client:
         collection = client["my_db"]["user_bindings"]
-        binder = BindService(collection)
-        bot = TurnipPriceBotService(sheetkey, 0, credential, bottoken, binder)
+        bind_service = BindService(collection)
+        bot = TurnipPriceBotService(gspread_service, bottoken, bind_service)
         bot.run()
 
 
 def parse_option():
     parser = optparse.OptionParser()
     parser.add_option(
-        "-s", "--sheetkey", action="store", dest="sheetkey", type="string"
+        "--sheet", action="store", dest="sheetkey", type="string"
     )
     parser.add_option(
-        "-c", "--credential", action="store", dest="credential", type="string"
+            "--credential", action="store", dest="credential", type="string"
     )
     parser.add_option("--bot-token", action="store", dest="bottoken", type="string")
     opt, _ = parser.parse_args()
