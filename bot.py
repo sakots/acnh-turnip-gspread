@@ -105,9 +105,9 @@ class TurnipPriceBotService:
             self.bind_service.bind(author.id, request.name)
         except Exception as e:
             logger.error("failed to bind user. error: %s", e, exc_info=True)
-            return "名前を覚える際にエラーが発生しました"
+            return "%s のスプレッドシートでの名前を覚える際にエラーが発生しました" % author
         logger.info("successfully bound. %s is %s, ", author, request.name)
-        return "覚えました: {} は {}".format(author, request.name)
+        return "{} はスプレッドシートで {}\n覚えました".format(author, request.name)
 
     def handle_who_am_i_request(self, author: discord.Member):
         try:
