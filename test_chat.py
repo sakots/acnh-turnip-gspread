@@ -8,25 +8,8 @@ import jaconv
 import chat
 
 
-def bot():
-    bot = Mock()
-    bot.id = 1234
-    bot.mention = "<@!1234>"
-    return bot
-
-
-def make_massage(content: str):
-    message = Mock()
-    message.author.bot = False
-    message.content = "<@!{}> {}".format(bot().id, content)
-    message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
-    message.mentions = [bot()]
-    return message
-
-
 class TestChatService(TestCase):
     def test_recognize(self):
-        # TODO: test 買値
         botuser = bot()
         service = chat.ChatService(botuser)
 
@@ -43,27 +26,57 @@ class TestChatService(TestCase):
             expected = chat.UpdateRequest("月AM", 100)
             self.assertEqual(service.recognize(message), expected)
 
-        bad_cases = [
-            "+",
-            "+月曜AM 月曜AM",
-            "+a b"]
-
+    def test_no_price(self):
+        botuser = bot()
+        service = chat.ChatService(botuser)
+        bad_cases = ["+", "+月曜AM 月曜AM", "+a b"]
         for c in bad_cases:
-            with self.assertRaises(chat.ChatError):
-                service.recognize(make_massage(c))
+            result = service.recognize(make_massage(c))
+            self.assertEqual(result, chat.SimplePostRequest("カブ価を教えて"))
+
+    def test_from_bot(self):
+        botuser = bot()
+        service = chat.ChatService(botuser)
+        message = make_massage("+100")
+        message.author = botuser
+        result = service.recognize(message)
+        self.assertTrue(isinstance(result, chat.IgnorableRequest))
+
+    def test_not_mention(self):
+        botuser = bot()
+        service = chat.ChatService(botuser)
+        message = make_massage("+100")
+        service.recognize(message)
+        message.mentions = []
+        result = service.recognize(message)
+        self.assertTrue(isinstance(result, chat.IgnorableRequest))
 
     def test_parse_update_command_monday(self):
         current = datetime.datetime(2020, 4, 6, 11, 30, 0)
         testcases = ["月am 100", "月 100", "月　100", "100"]
         for command in testcases:
-            term, price = chat.parse_update_command(command, current)
-            self.assertEqual("月AM", term)
-            self.assertEqual(100, price)
+            result = chat.parse_update_command(command, current)
+            self.assertEqual(result, chat.UpdateRequest("月AM", 100))
 
     def test_parse_update_command_sunday(self):
         current = datetime.datetime(2020, 4, 5, 10, 30, 0)
         testcases = ["買い 100", "100"]
         for command in testcases:
-            term, price = chat.parse_update_command(command, current)
-            self.assertEqual("買値", term)
-            self.assertEqual(100, price)
+            result = chat.parse_update_command(command, current)
+            self.assertEqual(result, chat.UpdateRequest("買値", 100))
+
+
+def bot():
+    bot = Mock()
+    bot.id = 1234
+    bot.mention = "<@!1234>"
+    return bot
+
+
+def make_massage(content: str):
+    message = Mock()
+    message.author.bot = False
+    message.content = "<@!{}> {}".format(bot().id, content)
+    message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
+    message.mentions = [bot()]
+    return message
