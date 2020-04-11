@@ -116,6 +116,8 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
     return UpdateRequest(term, price)
 
 
+# TODO: This class should only parse request and return know what to do.
+# This class should NOT generate concrete response. It should be done in class like RequestHandler
 class ChatService:
     def __init__(self, user: discord.User):
         self.user: discord.User = user
