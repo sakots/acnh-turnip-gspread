@@ -1,6 +1,40 @@
 # acnh-turnip-gspread
 あつもりの株価を Google Spreadsheet に記録する Discord bot
 
+## 起動方法
+
+`secret.env` に秘匿情報を書く。
+`GSPREAD_CREDENTIAL_BASE64` は例の JSON ファイルを base64 エンコードした結果。 
+
+```shell script
+export GSPREAD_NAME=
+export GSPREAD_CREDENTIAL_BASE64=
+export MONGO_HOST=mongo
+export MONGO_PORT=27017
+export MONGO_INITDB_ROOT_USERNAME=
+export MONGO_INITDB_ROOT_PASSWORD=
+export MONGO_APP_USERNAME=app
+export MONGO_APP_PASSWORD=
+export DISCORD_BOT_TOKEN=
+```
+
+`config.yml` を書く。
+TODO: `mongo_use_inmemory` を `false` にした場合は他の MongoDB 関連の設定を空にしても動くようにする。
+
+```yaml
+mongo_use_inmemory: false
+mongo_database: turnip_bot
+mongo_collection: name_binding
+```
+
+設定を読み込んでから `docker-compose` で起動する。
+
+```shell script
+$ . secret.env
+$ docker-compose build
+$ docker-compose up
+```
+
 ## コマンド
 
 ### 株価登録
