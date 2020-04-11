@@ -37,7 +37,7 @@ class TurnipPriceBotService:
 
         @self.client.event
         async def on_ready():
-            logger.info("ready")
+            logger.info("bot is ready")
 
         @self.client.event
         async def on_message(message):
