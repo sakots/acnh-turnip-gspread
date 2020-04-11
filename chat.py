@@ -1,6 +1,7 @@
 import datetime
 import re
 from dataclasses import dataclass
+from typing import Optional
 
 import discord
 import jaconv
@@ -8,34 +9,14 @@ import jaconv
 from logger import logger
 
 
-# TODO: move request classes to new file
-class ParseResult:
-    pass
-
-
 @dataclass
-class UpdateRequest(ParseResult):
+class UpdateRequest:
     term: str
-    price: int
+    price: Optional[int]
 
 
-@dataclass
-class BindRequest(ParseResult):
-    name: str
-
-
-class WhoAmIRequest(ParseResult):
+class ChatError(Exception):
     pass
-
-
-@dataclass
-class SimplePostRequest(ParseResult):
-    content: str
-
-
-@dataclass
-class IgnorableRequest(ParseResult):
-    reason: str
 
 
 def preprocess(myself: discord.User, message: discord.Message) -> str:
@@ -51,7 +32,11 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
         raise ValueError("bot message is ignored")
     content: str = message.content.strip()
     # reject unless replay to me
-    mention_to_me = next(filter(lambda m: m.id == myself.id, message.mentions), None)
+    mention_to_me = next(
+        filter(
+            lambda m: m.id == myself.id,
+            message.mentions),
+        None)
     if mention_to_me is None:
         raise ValueError("not mention message is ignored")
     # remove mention string
@@ -65,7 +50,9 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
     return command
 
 
-def parse_update_command(command: str, current: datetime.datetime) -> ParseResult:
+def parse_update_command(
+    command: str, current: datetime.datetime
+) -> (str, int):  # term, price
     """
     example:
     - 午前 100
@@ -111,44 +98,41 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
         price = int(m.group())
 
     if price is None:
-        return SimplePostRequest("カブ価を教えて")
+        raise ChatError("カブ価を教えて")
 
-    return UpdateRequest(term, price)
+    return term, price
 
 
-# TODO: This class should only parse request and return know what to do.
-# This class should NOT generate concrete response. It should be done in class like RequestHandler
 class ChatService:
     def __init__(self, user: discord.User):
+        # TODO: use
+        # https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
         self.user: discord.User = user
 
-    def recognize(self, message: discord.Message) -> ParseResult:
+    def recognize(self, message: discord.Message) -> UpdateRequest:
+        logger.info("message received: %s" % message.content)
+
         # see https://stackoverflow.com/a/13287083
         message_time: datetime.datetime = message.created_at.replace(
             tzinfo=datetime.timezone.utc
         ).astimezone(tz=None)
-
-        try:
-            command = preprocess(self.user, message)
-        except ValueError as e:
-            logger.info(e)
-            return IgnorableRequest(str(e))
+        command = preprocess(self.user, message)
 
         if len(command) == 0:
-            return SimplePostRequest("やぁ☆")
+            raise ChatError("やぁ☆")
 
         m = re.search(r"^\+(.*)", command)
         if m:
             body = m.group(1).strip()
-            return parse_update_command(body, message_time)
+            term, price = parse_update_command(body, message_time)
+            return UpdateRequest(term, price)
 
         m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
         if m:
-            name = m.group(2).strip()
-            return BindRequest(name)
+            body = m.group(2).strip()
+            raise NotImplemented
 
-        m = re.search(r"^who", command)
-        if m:
-            return WhoAmIRequest()
+        raise ChatError("わかりません")
 
-        return SimplePostRequest("わかりません")
+    def echo(self, message) -> str:
+        return message.content

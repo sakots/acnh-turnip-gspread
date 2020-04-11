@@ -12,8 +12,6 @@ google-auth = "*"
 discord-py = "*"
 jaconv = "*"
 coloredlogs = "*"
-pymongo-inmemory = "*"
-pymongo = "*"
 
 [requires]
 python_version = "3.8"
