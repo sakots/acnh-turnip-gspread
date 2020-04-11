@@ -57,11 +57,17 @@ class TurnipPriceTableViewService:
 
     def find_terms_row(self) -> Optional[int]:
         terms_row_identifier = "買値"
-        return next((i for i, row in enumerate(self.table) if (terms_row_identifier in row)), None)
+        return next(
+            (i for i, row in enumerate(self.table) if (terms_row_identifier in row)),
+            None,
+        )
 
     def find_users_column(self) -> Optional[int]:
         user_column_identifier = "なまえ"
-        return next((i for i, col in enumerate(self.trans) if (user_column_identifier in col)), None)
+        return next(
+            (i for i, col in enumerate(self.trans) if (user_column_identifier in col)),
+            None,
+        )
 
     def find_users(self) -> Optional[List[str]]:
         head_identifier = "なまえ"
@@ -69,7 +75,7 @@ class TurnipPriceTableViewService:
         if users_column is None:
             return None
         index = self.trans[users_column].index(head_identifier)
-        return users_column[index + 1:]
+        return users_column[index + 1 :]
 
     def find_terms(self) -> Optional[List[str]]:
         head_identifier = "買値"
@@ -77,4 +83,4 @@ class TurnipPriceTableViewService:
         if terms_row is None:
             return None
         idx = self.table[terms_row].index(head_identifier)
-        return terms_row[idx: idx + 13]
+        return terms_row[idx : idx + 13]

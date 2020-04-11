@@ -8,8 +8,8 @@ from bind import BindService
 class TestMongoNameIdBindService(TestCase):
     def test_bind(self):
         client = pymongo_inmemory.MongoClient()  # No need to provide host
-        db = client['testdb']
-        collection = db['user_bindings']
+        db = client["testdb"]
+        collection = db["user_bindings"]
 
         binds = BindService(collection)
 

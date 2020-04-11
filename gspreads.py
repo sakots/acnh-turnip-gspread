@@ -14,16 +14,12 @@ class GspreadService:
         self.table = self.sheet.get_all_values()
 
 
-def get_sheet(
-        worksheet: str,
-        sheetindex: int,
-        credential: str) -> gspread.Worksheet:
+def get_sheet(worksheet: str, sheetindex: int, credential: str) -> gspread.Worksheet:
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive",
     ]
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        credential, scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(credential, scope)
     gc = gspread.authorize(credentials)
     wks = gc.open_by_key(worksheet)
     worksheets = wks.worksheets()

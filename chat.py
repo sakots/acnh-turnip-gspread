@@ -51,11 +51,7 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
         raise ValueError("bot message is ignored")
     content: str = message.content.strip()
     # reject unless replay to me
-    mention_to_me = next(
-        filter(
-            lambda m: m.id == myself.id,
-            message.mentions),
-        None)
+    mention_to_me = next(filter(lambda m: m.id == myself.id, message.mentions), None)
     if mention_to_me is None:
         raise ValueError("not mention message is ignored")
     # remove mention string
@@ -69,9 +65,7 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
     return command
 
 
-def parse_update_command(
-    command: str, current: datetime.datetime
-) -> ParseResult:
+def parse_update_command(command: str, current: datetime.datetime) -> ParseResult:
     """
     example:
     - 午前 100

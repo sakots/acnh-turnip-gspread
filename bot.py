@@ -4,7 +4,15 @@ import discord
 
 import table
 from bind import BindService
-from chat import ChatService, SimplePostRequest, UpdateRequest, BindRequest, ParseResult, WhoAmIRequest, IgnorableRequest
+from chat import (
+    ChatService,
+    SimplePostRequest,
+    UpdateRequest,
+    BindRequest,
+    ParseResult,
+    WhoAmIRequest,
+    IgnorableRequest,
+)
 import gspreads
 from logger import logger
 from table import TurnipPriceTableViewService
@@ -12,7 +20,12 @@ from table import TurnipPriceTableViewService
 
 class TurnipPriceBotService:
     def __init__(
-        self, worksheet: str, sheet_index: int, credential: str, bot_token: str, binder: BindService,
+        self,
+        worksheet: str,
+        sheet_index: int,
+        credential: str,
+        bot_token: str,
+        binder: BindService,
     ):
         self.gs = gspreads.GspreadService(worksheet, sheet_index, credential)
         self.bot_token = bot_token
@@ -45,7 +58,9 @@ class TurnipPriceBotService:
             await message.channel.send(response)
             logger.info("message sent: ", response)
 
-    def handle_request(self, message: discord.Message, request: ParseResult) -> Optional[str]:
+    def handle_request(
+        self, message: discord.Message, request: ParseResult
+    ) -> Optional[str]:
         author: discord.Member = message.author
         # TODO: 各ifの中身をmethodにする
         if isinstance(request, SimplePostRequest):
@@ -59,10 +74,14 @@ class TurnipPriceBotService:
         elif isinstance(request, IgnorableRequest):
             return None
         else:
-            logger.warn("response to message %s is not implemented".format(message.content))
+            logger.warn(
+                "response to message %s is not implemented".format(message.content)
+            )
             return "実装されていません"
 
-    def handle_update_request(self, author: discord.Member, request: UpdateRequest) -> str:
+    def handle_update_request(
+        self, author: discord.Member, request: UpdateRequest
+    ) -> str:
         table_service = TurnipPriceTableViewService(self.gs.fetch_table())
         name = self.binder.find_name(author.id)
         result = table_service.find_position(name, request.term)

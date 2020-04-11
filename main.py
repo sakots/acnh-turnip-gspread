@@ -16,11 +16,7 @@ def parse_cmdargs():
     parser.add_option(
         "-c", "--credential", action="store", dest="credential", type="string"
     )
-    parser.add_option(
-        "--bot-token",
-        action="store",
-        dest="bottoken",
-        type="string")
+    parser.add_option("--bot-token", action="store", dest="bottoken", type="string")
     opt, _ = parser.parse_args()
     return opt
 
@@ -40,7 +36,7 @@ def main():
     logger.info("command line option: ", opt)
 
     with pymongo_inmemory.MongoClient() as client:
-        collection = client['my_db']['user_bindings']
+        collection = client["my_db"]["user_bindings"]
         binder = BindService(collection)
         bot = TurnipPriceBotService(sheetkey, 0, credential, bottoken, binder)
         bot.run()

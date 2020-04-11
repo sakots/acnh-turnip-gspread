@@ -29,14 +29,10 @@ class TestChatService(TestCase):
     def test_no_price(self):
         botuser = bot()
         service = chat.ChatService(botuser)
-        bad_cases = [
-            "+",
-            "+月曜AM 月曜AM",
-            "+a b"]
+        bad_cases = ["+", "+月曜AM 月曜AM", "+a b"]
         for c in bad_cases:
             result = service.recognize(make_massage(c))
             self.assertEqual(result, chat.SimplePostRequest("カブ価を教えて"))
-
 
     def test_from_bot(self):
         botuser = bot()
@@ -45,7 +41,6 @@ class TestChatService(TestCase):
         message.author = botuser
         result = service.recognize(message)
         self.assertTrue(isinstance(result, chat.IgnorableRequest))
-
 
     def test_not_mention(self):
         botuser = bot()
