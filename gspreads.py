@@ -10,12 +10,12 @@ class GspreadService:
             "https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/drive",
         ]
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(
             credential, scope
         )
-        gc = gspread.authorize(credentials)
-        wks = gc.open_by_key(name)
-        self.worksheets = wks.worksheets()
+        client = gspread.authorize(credentials)
+        spreadsheet = client.open_by_key(name)
+        self.worksheets = spreadsheet.worksheets()
 
     def update_cell(self, sheet: int, row: int, column: int, value):
         return self.worksheets[sheet].update_cell(row, column, value)

@@ -1,0 +1,18 @@
+version: '3.1'
+
+services:
+  mongo:
+    image: mongo:4.2.5-bionic
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
+      MONGO_APP_USERNAME: $MONGO_APP_USERNAME
+      MONGO_APP_PASSWORD: $MONGO_APP_PASSWORD
+    ports:
+      - 27017:27017
+    volumes:
+      - ./db:/data/db
+      - ./configdb:/data/configdb
+      - "$PWD/mongo-entrypoint/:/docker-entrypoint-initdb.d/"
+    command: mongod

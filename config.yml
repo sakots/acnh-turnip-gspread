@@ -1,0 +1,3 @@
+mongo_use_inmemory: false
+mongo_database: turnip_bot
+mongo_collection: name_binding
