@@ -118,8 +118,6 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
 
 class ChatService:
     def __init__(self, user: discord.User):
-        # TODO: use
-        # https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.mentions
         self.user: discord.User = user
 
     def recognize(self, message: discord.Message) -> ParseResult:
