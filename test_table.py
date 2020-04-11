@@ -28,7 +28,24 @@ class TestTurnipPriceTableViewService(TestCase):
 
     def test_find_terms(self):
         result = self.service.find_terms()
-        self.assertEqual(result, ['買値', '月AM', '月PM', '火AM', '火PM', '水AM', '水PM', '木AM', '木PM', '金AM', '金PM', '土AM', '土PM'])
+        self.assertEqual(
+            result,
+            [
+                "買値",
+                "月AM",
+                "月PM",
+                "火AM",
+                "火PM",
+                "水AM",
+                "水PM",
+                "木AM",
+                "木PM",
+                "金AM",
+                "金PM",
+                "土AM",
+                "土PM",
+            ],
+        )
 
 
 def service() -> TurnipPriceTableViewService:
