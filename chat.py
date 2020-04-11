@@ -20,6 +20,11 @@ class UpdateRequest(ParseResult):
 
 
 @dataclass
+class EmptyUpdateRequest(ParseResult):
+    pass
+
+
+@dataclass
 class BindRequest(ParseResult):
     name: str
 
@@ -36,6 +41,21 @@ class SimplePostRequest(ParseResult):
 @dataclass
 class IgnorableRequest(ParseResult):
     reason: str
+
+
+@dataclass
+class EmptyRequest(ParseResult):
+    pass
+
+
+@dataclass
+class EchoRequest(ParseResult):
+    content: str
+
+
+@dataclass
+class UnknownRequest(ParseResult):
+    pass
 
 
 def preprocess(myself: discord.User, message: discord.Message) -> str:
@@ -111,7 +131,7 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
         price = int(m.group())
 
     if price is None:
-        return SimplePostRequest("カブ価を教えて")
+        return EmptyUpdateRequest()
 
     return UpdateRequest(term, price)
 
@@ -136,7 +156,7 @@ class ChatService:
             return IgnorableRequest(str(e))
 
         if len(command) == 0:
-            return SimplePostRequest("やぁ☆")
+            return EmptyRequest()
 
         m = re.search(r"^\+(.*)", command)
         if m:
@@ -152,4 +172,8 @@ class ChatService:
         if m:
             return WhoAmIRequest()
 
-        return SimplePostRequest("わかりません")
+        m = re.search(r"^echo", command)
+        if m:
+            return EchoRequest(command)
+
+        return UnknownRequest()

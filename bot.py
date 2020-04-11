@@ -12,6 +12,10 @@ from chat import (
     ParseResult,
     WhoAmIRequest,
     IgnorableRequest,
+    EmptyRequest,
+    UnknownRequest,
+    EmptyUpdateRequest,
+    EchoRequest,
 )
 import gspreads
 from logger import logger
@@ -76,12 +80,20 @@ class TurnipPriceBotService:
             return request.content
         elif isinstance(request, UpdateRequest):
             return self.handle_update_request(author, request)
+        elif isinstance(request, EmptyUpdateRequest):
+            return "カブ価を教えて"
         elif isinstance(request, BindRequest):
             return self.handle_bind_request(author, request)
         elif isinstance(request, WhoAmIRequest):
             return self.handle_who_am_i_request(author)
         elif isinstance(request, IgnorableRequest):
             return None
+        elif isinstance(request, EchoRequest):
+            return request.content
+        elif isinstance(request, EmptyRequest):
+            return "やぁ☆"
+        elif isinstance(request, UnknownRequest):
+            return "分かりません"
         else:
             logger.warn("response not implemented. message id: %s", message.id)
             return "実装されていません"
