@@ -8,22 +8,6 @@ import jaconv
 import chat
 
 
-def bot():
-    bot = Mock()
-    bot.id = 1234
-    bot.mention = "<@!1234>"
-    return bot
-
-
-def make_massage(content: str):
-    message = Mock()
-    message.author.bot = False
-    message.content = "<@!{}> {}".format(bot().id, content)
-    message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
-    message.mentions = [bot()]
-    return message
-
-
 class TestChatService(TestCase):
     def test_recognize(self):
         botuser = bot()
@@ -85,3 +69,19 @@ class TestChatService(TestCase):
         for command in testcases:
             result = chat.parse_update_command(command, current)
             self.assertEqual(result, chat.UpdateRequest("買値", 100))
+
+
+def bot():
+    bot = Mock()
+    bot.id = 1234
+    bot.mention = "<@!1234>"
+    return bot
+
+
+def make_massage(content: str):
+    message = Mock()
+    message.author.bot = False
+    message.content = "<@!{}> {}".format(bot().id, content)
+    message.created_at = datetime.datetime(2020, 4, 6, 11, 30, 0)
+    message.mentions = [bot()]
+    return message

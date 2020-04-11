@@ -129,8 +129,6 @@ class ChatService:
         self.user: discord.User = user
 
     def recognize(self, message: discord.Message) -> ParseResult:
-        logger.info("message received: %s" % message.content)
-
         # see https://stackoverflow.com/a/13287083
         message_time: datetime.datetime = message.created_at.replace(
             tzinfo=datetime.timezone.utc
