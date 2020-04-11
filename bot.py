@@ -82,7 +82,7 @@ class TurnipPriceBotService:
     def handle_update_request(
         self, author: discord.Member, request: UpdateRequest
     ) -> str:
-        table_service = TurnipPriceTableViewService(self.gs.fetch_table())
+        table_service = TurnipPriceTableViewService(self.gs.get_table())
         name = self.binder.find_name(author.id)
         result = table_service.find_position(name, request.term)
         if isinstance(result, table.UserNotFound):
@@ -92,7 +92,7 @@ class TurnipPriceBotService:
         row, column = result.user_row, result.term_column
         org_price = self.gs.table[row][column]
         try:
-            self.gs.set(row + 1, column + 1, request.price)
+            self.gs.update_cell(row + 1, column + 1, request.price)
         except Exception as e:
             logger.error("failed to write to table", e, exc_info=True)
             return "テーブルに書き込めませんでした"

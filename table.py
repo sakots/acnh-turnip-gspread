@@ -8,6 +8,7 @@ class FindResult:
 
 @dataclass
 class Found(FindResult):
+    # zero-origin index
     user_row: int
     term_column: int
 
@@ -75,7 +76,7 @@ class TurnipPriceTableViewService:
         if users_column is None:
             return None
         index = self.trans[users_column].index(head_identifier)
-        return users_column[index + 1 :]
+        return self.trans[users_column][index + 1 :]
 
     def find_terms(self) -> Optional[List[str]]:
         head_identifier = "買値"
@@ -83,4 +84,4 @@ class TurnipPriceTableViewService:
         if terms_row is None:
             return None
         idx = self.table[terms_row].index(head_identifier)
-        return terms_row[idx : idx + 13]
+        return self.table[terms_row][idx : idx + 13]
