@@ -97,6 +97,7 @@ class TurnipPriceBotService:
         except Exception as e:
             logger.error("failed to write to table. error: %s", e, exc_info=True)
             return "テーブルに書き込めませんでした"
+        logger.info("successfully updated. row: %s, column: %s, %s -> %s", row, column, org_price, request.price)
         return "org: {}, new: {}".format(org_price, request.price)
 
     def handle_bind_request(self, author: discord.Member, request: BindRequest):
@@ -115,6 +116,8 @@ class TurnipPriceBotService:
             logger.error("failed to find binding. error: %s", e, exc_info=True)
             return "あなたは {}\nスプレッドシートでの名前を調べる際にエラーが発生しました".format(author)
         if name is not None:
+            logger.info("successfully found name. author: %s, name: %s", author, name)
             return "あなたは {}\nスプレッドシートでの名前は {}".format(author, name)
         else:
+            logger.info("successfully found name but binding not found. author: %s", author)
             return "あなたは {}\nスプレッドシートには登録されていません".format(author)
