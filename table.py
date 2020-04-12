@@ -31,8 +31,13 @@ class TermNotFound(FindResult):
 
 class TurnipPriceTableViewService:
     def __init__(self, table: List[List[str]]):
+        max_len = max(map(len, table))
+        for row in table:
+            while len(row) < max_len:
+                row.append('')
         self.table = table
-        self.trans = list(map(list, zip(*self.table)))
+        trans = list(map(list, zip(*table)))
+        self.trans = trans
 
     def find_position(self, user: str, term: str) -> FindResult:
         """

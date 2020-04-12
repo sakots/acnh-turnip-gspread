@@ -49,11 +49,11 @@ class TestTurnipPriceTableViewService(TestCase):
 
 
 def service() -> TurnipPriceTableViewService:
-    return TurnipPriceTableViewService(testdata("testdata.tsv"))
+    return TurnipPriceTableViewService(test_table("testdata.tsv"))
 
 
-def testdata(filename):
+def test_table(filename):
     with open(filename, mode="r", newline="", encoding="utf-8") as f:
         reader = csv.reader(f, delimiter="\t")
-        table = [row for row in reader]
-    return table
+        dat = [row for row in reader]
+    return dat

@@ -32,7 +32,7 @@ class TestChatService(TestCase):
         bad_cases = ["+", "+月曜AM 月曜AM", "+a b"]
         for c in bad_cases:
             result = service.recognize(make_massage(c))
-            self.assertEqual(result, chat.SimplePostRequest("カブ価を教えて"))
+            self.assertEqual(result, chat.EmptyUpdateRequest())
 
     def test_from_bot(self):
         botuser = bot()
