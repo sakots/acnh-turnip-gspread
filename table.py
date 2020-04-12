@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 class FindResult:
@@ -52,7 +52,7 @@ class TurnipPriceTableViewService:
 
         # find the header row and column
         rows = self.table  # just an alias
-        columns = list(map(list, zip(*rows)))
+        columns = self.trans
 
         if user not in columns[column_id]:
             return UserNotFound()
@@ -84,9 +84,24 @@ class TurnipPriceTableViewService:
         return self.trans[users_column][index + 1 :]
 
     def find_terms(self) -> Optional[List[str]]:
+        row, left, right = self.find_terms_range()
+        return self.table[row][left:right]
+
+    def find_terms_range(self) -> Optional[Tuple[int, int, int]]:
+        """
+        returns (row, column_left, column_right)
+        """
         head_identifier = "買値"
         terms_row = self.find_terms_row()
         if terms_row is None:
             return None
         idx = self.table[terms_row].index(head_identifier)
-        return self.table[terms_row][idx : idx + 13]
+        return terms_row, idx, idx + 13
+
+    def find_user_history(self, user: str) -> Optional[List[str]]:
+        users_col = self.find_users_column()
+        if user not in self.trans[users_col]:
+            return None
+        row = self.trans[users_col].index(user)
+        _, left, right = self.find_terms_range()
+        return self.table[row][left:right]
