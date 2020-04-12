@@ -20,6 +20,11 @@ class UpdateRequest(ParseResult):
 
 
 @dataclass
+class HistoryRequest(ParseResult):
+    pass
+
+
+@dataclass
 class EmptyUpdateRequest(ParseResult):
     pass
 
@@ -159,6 +164,10 @@ class ChatService:
         if m:
             body = m.group(1).strip()
             return parse_update_command(body, message_time)
+
+        m = re.search(r"h", command)
+        if m:
+            return HistoryRequest()
 
         m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
         if m:

@@ -16,7 +16,7 @@ from chat import (
     UnknownRequest,
     EmptyUpdateRequest,
     EchoRequest,
-)
+    HistoryRequest)
 import gspreads
 from logger import logger
 from table import TurnipPriceTableViewService
@@ -80,6 +80,8 @@ class TurnipPriceBotService:
             return request.content
         elif isinstance(request, UpdateRequest):
             return self.handle_update_request(author, request)
+        elif isinstance(request, HistoryRequest):
+            return self.handle_history_request(author)
         elif isinstance(request, EmptyUpdateRequest):
             return "カブ価を教えて"
         elif isinstance(request, BindRequest):
@@ -89,7 +91,7 @@ class TurnipPriceBotService:
         elif isinstance(request, IgnorableRequest):
             return None
         elif isinstance(request, EchoRequest):
-            return request.content
+            return message.content
         elif isinstance(request, EmptyRequest):
             return "やぁ☆"
         elif isinstance(request, UnknownRequest):
@@ -144,7 +146,24 @@ class TurnipPriceBotService:
                "期間: {}, 元の価格: {}, 新しい価格: {}\n" \
                "履歴: {} {}".format(request.term, org_price, request.price, name, format_history(history))
 
-    def handle_bind_request(self, author: discord.Member, request: BindRequest):
+    def handle_history_request(self, author: discord.Member) -> str:
+        # FIXME: dup
+        sheet_index = 0
+        raw_table = self.gspread_service.get_table(sheet_index)
+        table_service = TurnipPriceTableViewService(raw_table)
+        name = self.bind_service.find_name(author.id)
+        if name is None:
+            # FIXME: dup
+            return "あなたは {}\n" \
+                   "スプレッドシートには登録されていません".format(author)
+        history = table_service.find_user_history(name)
+        if history is None:
+            return "あなたは {}\n" \
+                    "スプレッドシートでは {}\n" \
+                   "スプレッドシートであなたを見つけられませんでした".format(author, name)
+        return "履歴: {} {}".format(name, format_history(history))
+
+    def handle_bind_request(self, author: discord.Member, request: BindRequest) -> str:
         try:
             self.bind_service.bind(author.id, request.name)
         except Exception as e:
@@ -154,7 +173,7 @@ class TurnipPriceBotService:
         return "{} はスプレッドシートで {}\n" \
                "覚えました".format(author, request.name)
 
-    def handle_who_am_i_request(self, author: discord.Member):
+    def handle_who_am_i_request(self, author: discord.Member) -> str:
         try:
             name = self.bind_service.find_name(author.id)
         except Exception as e:
