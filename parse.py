@@ -42,7 +42,7 @@ class ParseService:
         if m:
             return parse_result.HistoryRequest()
 
-        m = re.search(r"^(私は|iam|i'm|im)(.*)", normalized_body)
+        m = re.search(r"^(im)(.*)", normalized_body)
         if m:
             prefix_length = len(m.group(1))
             name = raw_body[prefix_length:].strip()
@@ -77,9 +77,9 @@ def remove_mention_str(myself: discord.User, message: discord.Message) -> str:
     remove mention string ('@bot')
     """
     content: str = message.content
-    content = content.replace("<@!%s>" % format(myself.id), " ", -1)
-    content = content.replace("<@%s>" % format(myself.id), " ", -1)
-    return content
+    content = content.replace("<@!%s>" % myself.id, " ", -1)
+    content = content.replace("<@%s>" % myself.id, " ", -1)
+    return content.strip()
 
 
 def normalize(command: str) -> str:
