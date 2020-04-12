@@ -63,13 +63,9 @@ class UnknownRequest(ParseResult):
     pass
 
 
-def preprocess(myself: discord.User, message: discord.Message) -> str:
+def validate(myself: discord.User, message: discord.Message):
     """
-    - ignore from bot or not mention message
-    - remove mention string ('@bot')
-    - zenkanku to hankaku for ascii chars
-    - lowercase
-    - strip
+    ignore message from bot and not mention
     """
     # reject message from bot
     if message.author.bot:
@@ -79,8 +75,22 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
     mention_to_me = next(filter(lambda m: m.id == myself.id, message.mentions), None)
     if mention_to_me is None:
         raise ValueError("not mention message is ignored")
-    # remove mention string
-    command = content.replace("<@!{}>".format(myself.id), " ", -1)
+
+
+def remove_mention_str(myself: discord.User, message: discord.Message) -> str:
+    """
+    remove mention string ('@bot')
+    """
+    return message.content.replace("<@!%s>" % format(myself.id), " ", -1)
+
+
+def normalize(command: str) -> str:
+    """
+    - zenkanku to hankaku for ascii chars
+    - lowercase
+    - strip
+    """
+    command: str = command.strip()
     # zenkaku to hankaku
     command = jaconv.z2h(command, ascii=True)
     # downcase
@@ -90,7 +100,7 @@ def preprocess(myself: discord.User, message: discord.Message) -> str:
     return command
 
 
-def parse_update_command(command: str, current: datetime.datetime) -> ParseResult:
+def parse_update_command(normalized_command: str, current: datetime.datetime) -> ParseResult:
     """
     example:
     - 午前 100
@@ -105,10 +115,10 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
     weekday = None
     wds = ["月", "火", "水", "木", "金", "土", "買値"]
     for wd in wds:
-        if wd in command:
+        if wd in normalized_command:
             weekday = wd
             break
-    if "買" in command:
+    if "買" in normalized_command:
         weekday = "買値"
     if weekday is None:
         weekday = wds[current.weekday() % len(wds)]
@@ -116,10 +126,10 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
     # read am. or pm.
     ampm = None
     for am in ["am", "午前", "ごぜん", "gozen"]:
-        if am in command:
+        if am in normalized_command:
             ampm = "AM"
     for pm in ["pm", "ごご", "ごご", "gogo"]:
-        if pm in command:
+        if pm in normalized_command:
             ampm = "PM"
     if ampm is None:
         ampm = "AM" if current.hour < 12 else "PM"
@@ -131,7 +141,7 @@ def parse_update_command(command: str, current: datetime.datetime) -> ParseResul
 
     # read price
     price = None
-    m = re.search(r"[0-9]+", command)
+    m = re.search(r"[0-9]+", normalized_command)
     if m is not None:
         price = int(m.group())
 
@@ -152,34 +162,37 @@ class ChatService:
         ).astimezone(tz=None)
 
         try:
-            command = preprocess(self.user, message)
+            validate(self.user, message)
         except ValueError as e:
             logger.info(e)
             return IgnorableRequest(str(e))
 
-        if len(command) == 0:
+        body = remove_mention_str(self.user, message)
+        normalized_body = normalize(body)
+
+        if len(normalized_body) == 0:
             return EmptyRequest()
 
-        m = re.search(r"^\+(.*)", command)
+        m = re.search(r"^\+(.*)", normalized_body)
         if m:
             body = m.group(1).strip()
             return parse_update_command(body, message_time)
 
-        m = re.search(r"h", command)
+        m = re.search(r"h", normalized_body)
         if m:
             return HistoryRequest()
 
-        m = re.search(r"^(私は|i am|i'm|im)(.*)", command)
+        m = re.search(r"^(私は|i am|i'm|im)(.*)", normalized_body)
         if m:
             name = m.group(2).strip()
             return BindRequest(name)
 
-        m = re.search(r"^who", command)
+        m = re.search(r"^who", normalized_body)
         if m:
             return WhoAmIRequest()
 
-        m = re.search(r"^echo", command)
+        m = re.search(r"^echo", normalized_body)
         if m:
-            return EchoRequest(command)
+            return EchoRequest(normalized_body)
 
         return UnknownRequest()

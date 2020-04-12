@@ -3,7 +3,7 @@ from typing import List
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# TODO: たまに再認証
+# TODO: たまに再認証が必要?
 
 
 class GspreadService:
