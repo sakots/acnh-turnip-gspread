@@ -38,7 +38,7 @@ class ParseService:
         if m:
             return parse_update_command(m.group(1).strip(), message_time)
 
-        m = re.search(r"^h", normalized_body)
+        m = re.search(r"^hist", normalized_body)
         if m:
             return parse_result.HistoryRequest()
 
