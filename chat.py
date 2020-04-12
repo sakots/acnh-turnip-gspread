@@ -167,24 +167,24 @@ class ChatService:
             logger.info(e)
             return IgnorableRequest(str(e))
 
-        body = remove_mention_str(self.user, message)
-        normalized_body = normalize(body)
+        raw_body = remove_mention_str(self.user, message)
+        normalized_body = normalize(raw_body)
 
         if len(normalized_body) == 0:
             return EmptyRequest()
 
         m = re.search(r"^\+(.*)", normalized_body)
         if m:
-            body = m.group(1).strip()
-            return parse_update_command(body, message_time)
+            return parse_update_command(m.group(1).strip(), message_time)
 
         m = re.search(r"h", normalized_body)
         if m:
             return HistoryRequest()
 
-        m = re.search(r"^(私は|i am|i'm|im)(.*)", normalized_body)
+        m = re.search(r"^(私は|iam|i'm|im)(.*)", normalized_body)
         if m:
-            name = m.group(2).strip()
+            prefix_length = len(m.group(1))
+            name = raw_body[prefix_length:].strip()
             return BindRequest(name)
 
         m = re.search(r"^who", normalized_body)
@@ -193,6 +193,6 @@ class ChatService:
 
         m = re.search(r"^echo", normalized_body)
         if m:
-            return EchoRequest(normalized_body)
+            return EchoRequest(raw_body)
 
         return UnknownRequest()

@@ -13,7 +13,7 @@ class TestChatService(TestCase):
         self.assertEqual(chat.normalize("＋１００"), '+100')
         self.assertEqual(chat.normalize("ＡＢＣ"), 'abc')
 
-    def test_recognize(self):
+    def test_recognize_update(self):
         botuser = bot()
         service = chat.ChatService(botuser)
 
@@ -29,6 +29,13 @@ class TestChatService(TestCase):
             message = make_massage(c)
             expected = chat.UpdateRequest("月AM", 100)
             self.assertEqual(service.recognize(message), expected)
+
+    def test_recognize_bind(self):
+        botuser = bot()
+        service = chat.ChatService(botuser)
+        self.assertEqual(chat.BindRequest("ー"), service.recognize(make_massage("iamー")))
+        self.assertEqual(chat.BindRequest("ー"), service.recognize(make_massage("iam ー")))
+        self.assertEqual(chat.BindRequest("🍎"), service.recognize(make_massage("im🍎")))
 
     def test_no_price(self):
         botuser = bot()
