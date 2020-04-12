@@ -16,7 +16,7 @@ class RespondService:
         self.bind_service = bind_service
 
     def respond_to(
-            self, message: discord.Message, request: parse_result.ParseResult
+        self, message: discord.Message, request: parse_result.ParseResult
     ) -> Optional[str]:
         author: discord.Member = message.author
         if isinstance(request, parse_result.SimplePostRequest):
@@ -44,7 +44,7 @@ class RespondService:
             return "実装されていません"
 
     def handle_update_request(
-            self, author: discord.Member, request: parse_result.UpdateRequest
+        self, author: discord.Member, request: parse_result.UpdateRequest
     ) -> str:
         # get position to write on sheet 0
         sheet_index = 0
@@ -112,7 +112,7 @@ class RespondService:
         return "履歴: {} {}".format(name, format_history(history))
 
     def handle_bind_request(
-            self, author: discord.Member, request: parse_result.BindRequest
+        self, author: discord.Member, request: parse_result.BindRequest
     ) -> str:
         try:
             self.bind_service.bind(author.id, request.name)
