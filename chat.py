@@ -81,7 +81,7 @@ def remove_mention_str(myself: discord.User, message: discord.Message) -> str:
     """
     remove mention string ('@bot')
     """
-    return message.content.replace("<@!%s>" % format(myself.id), " ", -1)
+    return message.content.replace("<@!%s>" % format(myself.id), " ", -1).strip()
 
 
 def normalize(command: str) -> str:
@@ -92,7 +92,7 @@ def normalize(command: str) -> str:
     """
     command: str = command.strip()
     # zenkaku to hankaku
-    command = jaconv.z2h(command, ascii=True)
+    command = jaconv.z2h(command, kana=False, digit=True, ascii=True)
     # downcase
     command = command.lower()
     # strip

@@ -9,15 +9,19 @@ import chat
 
 
 class TestChatService(TestCase):
+    def test_normalize(self):
+        self.assertEqual(chat.normalize("＋１００"), '+100')
+        self.assertEqual(chat.normalize("ＡＢＣ"), 'abc')
+
     def test_recognize(self):
         botuser = bot()
         service = chat.ChatService(botuser)
 
         base = ["月曜午前", "月AM", "午前月曜", "AM月", "AM月　　"]
         small = map(lambda x: x.lower(), base)
-        ja = map(lambda x: jaconv.h2z(x, ascii=True), base)
+        ja = map(lambda x: jaconv.h2z(x, kana=False, digit=True, ascii=True), base)
         term = list(itertools.chain(base, small, ja))
-        ok_cases = ["+100 {}".format(c) for c in term] + [
+        ok_cases = ["+100 {}".format(c) for c in term] + ["＋１００ {}".format(c) for c in term] + [
             "+{} 100".format(c) for c in term
         ]
 
