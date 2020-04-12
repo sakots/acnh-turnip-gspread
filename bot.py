@@ -15,9 +15,7 @@ class TurnipPriceBotService:
         gspread_service: gspreads.GspreadService,
         bind_service: BindService,
     ):
-        self.parse_service = ParseService(self.client.user)
         self.respond_service = RespondService(gspread_service, bind_service)
-
         self.bot_token = token
         self.client = discord.Client()
 
@@ -40,9 +38,10 @@ class TurnipPriceBotService:
             message,
         )
 
-        # parse message by self.parse_service
+        # parse message by parse_service
+        parse_service = ParseService(self.client.user)
         try:
-            request: parse_result.ParseResult = self.parse_service.recognize(message)
+            request: parse_result.ParseResult = parse_service.recognize(message)
         except Exception as e:
             logger.error(
                 "unknown error occurred on parser. error: %s, message id %s",

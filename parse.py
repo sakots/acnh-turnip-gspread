@@ -38,7 +38,7 @@ class ParseService:
         if m:
             return parse_update_command(m.group(1).strip(), message_time)
 
-        m = re.search(r"h", normalized_body)
+        m = re.search(r"^h", normalized_body)
         if m:
             return parse_result.HistoryRequest()
 
@@ -66,7 +66,6 @@ def validate(myself: discord.User, message: discord.Message):
     # reject message from bot
     if message.author.bot:
         raise ValueError("bot message is ignored")
-    content: str = message.content.strip()
     # reject unless replay to me
     mention_to_me = next(filter(lambda m: m.id == myself.id, message.mentions), None)
     if mention_to_me is None:
