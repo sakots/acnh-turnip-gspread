@@ -19,6 +19,7 @@ class RespondService:
         self, message: discord.Message, request: parse_result.ParseResult
     ) -> Optional[str]:
         author: discord.Member = message.author
+        # FIXME: remove too many if. resolve handler method by type(request).__name__ ?
         if isinstance(request, parse_result.SimplePostRequest):
             return request.content
         elif isinstance(request, parse_result.UpdateRequest):
