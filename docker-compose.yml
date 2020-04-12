@@ -32,5 +32,5 @@ services:
     volumes:
       - ./db:/data/db
       - ./configdb:/data/configdb
-      - "$PWD/mongo-entrypoint/:/docker-entrypoint-initdb.d/"
+      - ./mongo-entrypoint/:/docker-entrypoint-initdb.d/
     command: mongod

@@ -99,7 +99,7 @@ class RespondService:
         logger.info("history: %s", history)
         return (
             "スプレッドシートに書きました。\n"
-            "期間: {} | 元の価格: {} | 新しい価格: {} | スプレッドシートでの名前{}n\n"
+            "期間: {} | 元の価格: {} | 新しい価格: {} | スプレッドシートでの名前: `{}`\n"
             "履歴: {}\n"
             "書き込んだセル: 行{} 列{} (0始まり)".format(
                 request.term, org_price, request.price, name, format_history(history), row, column
