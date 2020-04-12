@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 import discord
 
@@ -101,21 +101,24 @@ class TurnipPriceBotService:
     def handle_update_request(
         self, author: discord.Member, request: UpdateRequest
     ) -> str:
+        # get position to write on sheet 0
         sheet_index = 0
         raw_table = self.gspread_service.get_table(sheet_index)
         table_service = TurnipPriceTableViewService(raw_table)
         name = self.bind_service.find_name(author.id)
-        result = table_service.find_position(name, request.term)
-        if isinstance(result, table.UserNotFound):
+        position = table_service.find_position(name, request.term)
+        if isinstance(position, table.UserNotFound):
             logger.info("user not found on table. user: %s", author)
             return "テーブルからあなたの情報が見つかりません"
-        if not isinstance(result, table.Found):
+        if not isinstance(position, table.Found):
             logger.info(
                 "user not found on table. user: %s, request: %s", author, request
             )
             return "テーブルのどこに書けばいいか分かりません"
-        row, column = result.user_row, result.term_column
-        org_price = raw_table[row][column]
+
+        # try to write
+        row, column = position.user_row, position.term_column
+        org_price = format_price(raw_table[row][column])
         try:
             self.gspread_service.update_cell(
                 sheet_index, row + 1, column + 1, request.price
@@ -123,6 +126,7 @@ class TurnipPriceBotService:
         except Exception as e:
             logger.error("failed to write to table. error: %s", e, exc_info=True)
             return "テーブルに書き込めませんでした"
+
         logger.info(
             "successfully updated. row: %s, column: %s, %s -> %s",
             row,
@@ -130,7 +134,15 @@ class TurnipPriceBotService:
             org_price,
             request.price,
         )
-        return "org: {}, new: {}".format(org_price, request.price)
+
+        # get history
+        _, column_left, column_right = table_service.find_terms_range()
+        history = table_service.find_user_history(name)
+
+        logger.info("history: %s", history)
+        return "書きました\n" \
+               "期間: {}, 元の価格: {}, 新しい価格: {}\n" \
+               "履歴: {} {}".format(request.term, org_price, request.price, name, format_history(history))
 
     def handle_bind_request(self, author: discord.Member, request: BindRequest):
         try:
@@ -139,19 +151,39 @@ class TurnipPriceBotService:
             logger.error("failed to bind user. error: %s", e, exc_info=True)
             return "%s のスプレッドシートでの名前を覚える際にエラーが発生しました" % author
         logger.info("successfully bound. %s is %s, ", author, request.name)
-        return "{} はスプレッドシートで {}\n覚えました".format(author, request.name)
+        return "{} はスプレッドシートで {}\n" \
+               "覚えました".format(author, request.name)
 
     def handle_who_am_i_request(self, author: discord.Member):
         try:
             name = self.bind_service.find_name(author.id)
         except Exception as e:
             logger.error("failed to find binding. error: %s", e, exc_info=True)
-            return "あなたは {}\nスプレッドシートでの名前を調べる際にエラーが発生しました".format(author)
+            return "あなたは {}\n" \
+                   "スプレッドシートでの名前を調べる際にエラーが発生しました".format(author)
         if name is not None:
             logger.info("successfully found name. author: %s, name: %s", author, name)
-            return "あなたは {}\nスプレッドシートでの名前は {}".format(author, name)
+            return "あなたは {}\n" \
+                   "スプレッドシートでの名前は {}".format(author, name)
         else:
             logger.info(
                 "successfully found name but binding not found. author: %s", author
             )
-            return "あなたは {}\nスプレッドシートには登録されていません".format(author)
+            return "あなたは {}\n" \
+                   "スプレッドシートには登録されていません".format(author)
+
+
+def format_history(history: List[str]) -> str:
+    if len(history) != 13:
+        raise ValueError("length must be 13")
+    res = "%s " % history[0]
+    for i in list(range(1, 13, 2)):
+        am, pm = history[i], history[i+1]
+        res += " %s/%s" % (format_price(am), format_price(pm))
+    return res
+
+
+def format_price(price) -> str:
+    if (price or '').strip() == '':
+        price = '-'
+    return price

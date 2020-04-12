@@ -3,6 +3,8 @@ from typing import List
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+# TODO: たまに再認証
+
 
 class GspreadService:
     def __init__(self, name: str, credential: str):
