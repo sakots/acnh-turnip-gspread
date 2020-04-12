@@ -76,7 +76,10 @@ def remove_mention_str(myself: discord.User, message: discord.Message) -> str:
     """
     remove mention string ('@bot')
     """
-    return message.content.replace("<@!%s>" % format(myself.id), " ", -1).strip()
+    content: str = message.content
+    content = content.replace("<@!%s>" % format(myself.id), " ", -1)
+    content = content.replace("<@%s>" % format(myself.id), " ", -1)
+    return content
 
 
 def normalize(command: str) -> str:
