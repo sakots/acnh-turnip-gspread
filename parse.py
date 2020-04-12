@@ -1,66 +1,62 @@
 import datetime
 import re
-from dataclasses import dataclass
 
 import discord
 import jaconv
 
+import parse_result
 from logger import logger
 
 
-# TODO: move request classes to new file
-class ParseResult:
-    pass
+class ParseService:
+    """
+    parse discord.Message and convert it to ConvertResult
+    """
 
+    def __init__(self, user: discord.User):
+        self.user: discord.User = user
 
-@dataclass
-class UpdateRequest(ParseResult):
-    term: str
-    price: int
+    def recognize(self, message: discord.Message) -> parse_result.ParseResult:
+        # see https://stackoverflow.com/a/13287083
+        message_time: datetime.datetime = message.created_at.replace(
+            tzinfo=datetime.timezone.utc
+        ).astimezone(tz=None)
 
+        try:
+            validate(self.user, message)
+        except ValueError as e:
+            logger.info(e)
+            return parse_result.IgnorableRequest(str(e))
 
-@dataclass
-class HistoryRequest(ParseResult):
-    pass
+        raw_body = remove_mention_str(self.user, message)
+        normalized_body = normalize(raw_body)
 
+        if len(normalized_body) == 0:
+            return parse_result.EmptyRequest()
 
-@dataclass
-class EmptyUpdateRequest(ParseResult):
-    pass
+        m = re.search(r"^\+(.*)", normalized_body)
+        if m:
+            return parse_update_command(m.group(1).strip(), message_time)
 
+        m = re.search(r"h", normalized_body)
+        if m:
+            return parse_result.HistoryRequest()
 
-@dataclass
-class BindRequest(ParseResult):
-    name: str
+        m = re.search(r"^(私は|iam|i'm|im)(.*)", normalized_body)
+        if m:
+            prefix_length = len(m.group(1))
+            name = raw_body[prefix_length:].strip()
+            return parse_result.BindRequest(name)
 
+        m = re.search(r"^who", normalized_body)
+        if m:
+            return parse_result.WhoAmIRequest()
 
-class WhoAmIRequest(ParseResult):
-    pass
+        m = re.search(r"^echo", normalized_body)
+        if m:
+            return parse_result.EchoRequest(raw_body)
 
-
-@dataclass
-class SimplePostRequest(ParseResult):
-    content: str
-
-
-@dataclass
-class IgnorableRequest(ParseResult):
-    reason: str
-
-
-@dataclass
-class EmptyRequest(ParseResult):
-    pass
-
-
-@dataclass
-class EchoRequest(ParseResult):
-    content: str
-
-
-@dataclass
-class UnknownRequest(ParseResult):
-    pass
+        return parse_result.UnknownRequest()
 
 
 def validate(myself: discord.User, message: discord.Message):
@@ -102,7 +98,7 @@ def normalize(command: str) -> str:
 
 def parse_update_command(
     normalized_command: str, current: datetime.datetime
-) -> ParseResult:
+) -> parse_result.ParseResult:
     """
     example:
     - 午前 100
@@ -148,53 +144,6 @@ def parse_update_command(
         price = int(m.group())
 
     if price is None:
-        return EmptyUpdateRequest()
+        return parse_result.EmptyUpdateRequest()
 
-    return UpdateRequest(term, price)
-
-
-class ChatService:
-    def __init__(self, user: discord.User):
-        self.user: discord.User = user
-
-    def recognize(self, message: discord.Message) -> ParseResult:
-        # see https://stackoverflow.com/a/13287083
-        message_time: datetime.datetime = message.created_at.replace(
-            tzinfo=datetime.timezone.utc
-        ).astimezone(tz=None)
-
-        try:
-            validate(self.user, message)
-        except ValueError as e:
-            logger.info(e)
-            return IgnorableRequest(str(e))
-
-        raw_body = remove_mention_str(self.user, message)
-        normalized_body = normalize(raw_body)
-
-        if len(normalized_body) == 0:
-            return EmptyRequest()
-
-        m = re.search(r"^\+(.*)", normalized_body)
-        if m:
-            return parse_update_command(m.group(1).strip(), message_time)
-
-        m = re.search(r"h", normalized_body)
-        if m:
-            return HistoryRequest()
-
-        m = re.search(r"^(私は|iam|i'm|im)(.*)", normalized_body)
-        if m:
-            prefix_length = len(m.group(1))
-            name = raw_body[prefix_length:].strip()
-            return BindRequest(name)
-
-        m = re.search(r"^who", normalized_body)
-        if m:
-            return WhoAmIRequest()
-
-        m = re.search(r"^echo", normalized_body)
-        if m:
-            return EchoRequest(raw_body)
-
-        return UnknownRequest()
+    return parse_result.UpdateRequest(term, price)

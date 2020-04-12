@@ -2,22 +2,11 @@ from typing import Optional, List
 
 import discord
 
+import parse_result
 import table
 from bind import BindService
-from chat import (
-    ChatService,
-    SimplePostRequest,
-    UpdateRequest,
-    BindRequest,
-    ParseResult,
-    WhoAmIRequest,
-    IgnorableRequest,
-    EmptyRequest,
-    UnknownRequest,
-    EmptyUpdateRequest,
-    EchoRequest,
-    HistoryRequest,
-)
+from parse import ParseService
+
 import gspreads
 from logger import logger
 from table import TurnipPriceTableViewService
@@ -54,12 +43,12 @@ class TurnipPriceBotService:
             message.id,
             message,
         )
-        chat_service = ChatService(self.client.user)
+        parse_service = ParseService(self.client.user)
         try:
-            request: ParseResult = chat_service.recognize(message)
+            request: parse_result.ParseResult = parse_service.recognize(message)
         except Exception as e:
             logger.error(
-                "unknown error occurred. error: %s, message id %s",
+                "unknown error occurred on parser. error: %s, message id %s",
                 e,
                 message.id,
                 exc_info=True,
@@ -74,35 +63,35 @@ class TurnipPriceBotService:
 
     # TODO: extract to class RequestHandleService
     def handle_request(
-        self, message: discord.Message, request: ParseResult
+        self, message: discord.Message, request: parse_result.ParseResult
     ) -> Optional[str]:
         author: discord.Member = message.author
-        if isinstance(request, SimplePostRequest):
+        if isinstance(request, parse_result.SimplePostRequest):
             return request.content
-        elif isinstance(request, UpdateRequest):
+        elif isinstance(request, parse_result.UpdateRequest):
             return self.handle_update_request(author, request)
-        elif isinstance(request, HistoryRequest):
+        elif isinstance(request, parse_result.HistoryRequest):
             return self.handle_history_request(author)
-        elif isinstance(request, EmptyUpdateRequest):
+        elif isinstance(request, parse_result.EmptyUpdateRequest):
             return "カブ価を教えて"
-        elif isinstance(request, BindRequest):
+        elif isinstance(request, parse_result.BindRequest):
             return self.handle_bind_request(author, request)
-        elif isinstance(request, WhoAmIRequest):
+        elif isinstance(request, parse_result.WhoAmIRequest):
             return self.handle_who_am_i_request(author)
-        elif isinstance(request, IgnorableRequest):
+        elif isinstance(request, parse_result.IgnorableRequest):
             return None
-        elif isinstance(request, EchoRequest):
+        elif isinstance(request, parse_result.EchoRequest):
             return message.content
-        elif isinstance(request, EmptyRequest):
+        elif isinstance(request, parse_result.EmptyRequest):
             return "やぁ☆"
-        elif isinstance(request, UnknownRequest):
+        elif isinstance(request, parse_result.UnknownRequest):
             return "分かりません"
         else:
             logger.warn("response not implemented. message id: %s", message.id)
             return "実装されていません"
 
     def handle_update_request(
-        self, author: discord.Member, request: UpdateRequest
+        self, author: discord.Member, request: parse_result.UpdateRequest
     ) -> str:
         # get position to write on sheet 0
         sheet_index = 0
@@ -169,7 +158,9 @@ class TurnipPriceBotService:
             )
         return "履歴: {} {}".format(name, format_history(history))
 
-    def handle_bind_request(self, author: discord.Member, request: BindRequest) -> str:
+    def handle_bind_request(
+        self, author: discord.Member, request: parse_result.BindRequest
+    ) -> str:
         try:
             self.bind_service.bind(author.id, request.name)
         except Exception as e:
