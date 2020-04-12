@@ -100,7 +100,9 @@ def normalize(command: str) -> str:
     return command
 
 
-def parse_update_command(normalized_command: str, current: datetime.datetime) -> ParseResult:
+def parse_update_command(
+    normalized_command: str, current: datetime.datetime
+) -> ParseResult:
     """
     example:
     - 午前 100

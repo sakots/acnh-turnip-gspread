@@ -34,7 +34,7 @@ class TurnipPriceTableViewService:
         max_len = max(map(len, table))
         for row in table:
             while len(row) < max_len:
-                row.append('')
+                row.append("")
         self.table = table
         trans = list(map(list, zip(*table)))
         self.trans = trans

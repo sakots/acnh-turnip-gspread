@@ -10,8 +10,8 @@ import chat
 
 class TestChatService(TestCase):
     def test_normalize(self):
-        self.assertEqual(chat.normalize("＋１００"), '+100')
-        self.assertEqual(chat.normalize("ＡＢＣ"), 'abc')
+        self.assertEqual(chat.normalize("＋１００"), "+100")
+        self.assertEqual(chat.normalize("ＡＢＣ"), "abc")
 
     def test_recognize_update(self):
         botuser = bot()
@@ -21,9 +21,11 @@ class TestChatService(TestCase):
         small = map(lambda x: x.lower(), base)
         ja = map(lambda x: jaconv.h2z(x, kana=False, digit=True, ascii=True), base)
         term = list(itertools.chain(base, small, ja))
-        ok_cases = ["+100 {}".format(c) for c in term] + ["＋１００ {}".format(c) for c in term] + [
-            "+{} 100".format(c) for c in term
-        ]
+        ok_cases = (
+            ["+100 {}".format(c) for c in term]
+            + ["＋１００ {}".format(c) for c in term]
+            + ["+{} 100".format(c) for c in term]
+        )
 
         for c in ok_cases:
             message = make_massage(c)
@@ -34,7 +36,9 @@ class TestChatService(TestCase):
         botuser = bot()
         service = chat.ChatService(botuser)
         self.assertEqual(chat.BindRequest("ー"), service.recognize(make_massage("iamー")))
-        self.assertEqual(chat.BindRequest("ー"), service.recognize(make_massage("iam ー")))
+        self.assertEqual(
+            chat.BindRequest("ー"), service.recognize(make_massage("iam ー"))
+        )
         self.assertEqual(chat.BindRequest("🍎"), service.recognize(make_massage("im🍎")))
 
     def test_no_price(self):

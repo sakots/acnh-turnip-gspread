@@ -51,13 +51,33 @@ class TestTurnipPriceTableViewService(TestCase):
 
     def test_find_user_history(self):
         result = self.service.find_user_history("bob")
-        self.assertEqual(result, ["109", "94", "89", "121", "207", "495", "167", "111", "76", "95", "63", "45", "81"])
+        self.assertEqual(
+            result,
+            [
+                "109",
+                "94",
+                "89",
+                "121",
+                "207",
+                "495",
+                "167",
+                "111",
+                "76",
+                "95",
+                "63",
+                "45",
+                "81",
+            ],
+        )
 
         result = self.service.find_user_history("x")
         self.assertEqual(result, None)
 
         result = self.service.find_user_history("alice")
-        self.assertEqual(result, ["99", "", "64", "", "", "", "", "", "", "", "", "", ""])
+        self.assertEqual(
+            result, ["99", "", "64", "", "", "", "", "", "", "", "", "", ""]
+        )
+
 
 def service() -> TurnipPriceTableViewService:
     return TurnipPriceTableViewService(test_table("testdata.tsv"))

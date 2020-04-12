@@ -16,7 +16,8 @@ from chat import (
     UnknownRequest,
     EmptyUpdateRequest,
     EchoRequest,
-    HistoryRequest)
+    HistoryRequest,
+)
 import gspreads
 from logger import logger
 from table import TurnipPriceTableViewService
@@ -142,9 +143,13 @@ class TurnipPriceBotService:
         history = table_service.find_user_history(name)
 
         logger.info("history: %s", history)
-        return "書きました\n" \
-               "期間: {}, 元の価格: {}, 新しい価格: {}\n" \
-               "履歴: {} {}".format(request.term, org_price, request.price, name, format_history(history))
+        return (
+            "書きました\n"
+            "期間: {}, 元の価格: {}, 新しい価格: {}\n"
+            "履歴: {} {}".format(
+                request.term, org_price, request.price, name, format_history(history)
+            )
+        )
 
     def handle_history_request(self, author: discord.Member) -> str:
         # FIXME: dup
@@ -154,13 +159,14 @@ class TurnipPriceBotService:
         name = self.bind_service.find_name(author.id)
         if name is None:
             # FIXME: dup
-            return "あなたは {}\n" \
-                   "スプレッドシートには登録されていません".format(author)
+            return "あなたは {}\n" "スプレッドシートには登録されていません".format(author)
         history = table_service.find_user_history(name)
         if history is None:
-            return "あなたは {}\n" \
-                    "スプレッドシートでは {}\n" \
-                   "スプレッドシートであなたを見つけられませんでした".format(author, name)
+            return (
+                "あなたは {}\n"
+                "スプレッドシートでは {}\n"
+                "スプレッドシートであなたを見つけられませんでした".format(author, name)
+            )
         return "履歴: {} {}".format(name, format_history(history))
 
     def handle_bind_request(self, author: discord.Member, request: BindRequest) -> str:
@@ -170,26 +176,22 @@ class TurnipPriceBotService:
             logger.error("failed to bind user. error: %s", e, exc_info=True)
             return "%s のスプレッドシートでの名前を覚える際にエラーが発生しました" % author
         logger.info("successfully bound. %s is %s, ", author, request.name)
-        return "{} はスプレッドシートで {}\n" \
-               "覚えました".format(author, request.name)
+        return "{} はスプレッドシートで {}\n" "覚えました".format(author, request.name)
 
     def handle_who_am_i_request(self, author: discord.Member) -> str:
         try:
             name = self.bind_service.find_name(author.id)
         except Exception as e:
             logger.error("failed to find binding. error: %s", e, exc_info=True)
-            return "あなたは {}\n" \
-                   "スプレッドシートでの名前を調べる際にエラーが発生しました".format(author)
+            return "あなたは {}\n" "スプレッドシートでの名前を調べる際にエラーが発生しました".format(author)
         if name is not None:
             logger.info("successfully found name. author: %s, name: %s", author, name)
-            return "あなたは {}\n" \
-                   "スプレッドシートでの名前は {}".format(author, name)
+            return "あなたは {}\n" "スプレッドシートでの名前は {}".format(author, name)
         else:
             logger.info(
                 "successfully found name but binding not found. author: %s", author
             )
-            return "あなたは {}\n" \
-                   "スプレッドシートには登録されていません".format(author)
+            return "あなたは {}\n" "スプレッドシートには登録されていません".format(author)
 
 
 def format_history(history: List[str]) -> str:
@@ -197,12 +199,12 @@ def format_history(history: List[str]) -> str:
         raise ValueError("length must be 13")
     res = "%s " % history[0]
     for i in list(range(1, 13, 2)):
-        am, pm = history[i], history[i+1]
+        am, pm = history[i], history[i + 1]
         res += " %s/%s" % (format_price(am), format_price(pm))
     return res
 
 
 def format_price(price) -> str:
-    if (price or '').strip() == '':
-        price = '-'
+    if (price or "").strip() == "":
+        price = "-"
     return price
