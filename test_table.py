@@ -8,30 +8,26 @@ from table import TurnipPriceTableViewService
 class TestTurnipPriceTableViewService(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.service = service()
+        with open("testdata.tsv", mode="r", newline="", encoding="utf-8") as f:
+            reader = csv.reader(f, delimiter="\t")
+            rows = [row for row in reader]
+        cls.service = TurnipPriceTableViewService(rows)
 
     def test_find_position(self):
-        result = self.service.find_position("charlie", "金PM")
-        self.assertEqual(result, table.Found(5, 12))
-        result = self.service.find_position("🍎🍒", "月AM")
-        self.assertEqual(result, table.Found(8, 3))
+        self.assertEqual(table.Found(5, 12), self.service.find_position("3", "金PM"))
+        self.assertEqual(table.Found(8, 3), self.service.find_position("6", "月AM"))
 
     def test_find_terms_row(self):
-        result = self.service.find_terms_row()
-        self.assertEqual(result, 2)
+        self.assertEqual(2, self.service.find_term_row())
 
     def test_find_users_column(self):
-        result = self.service.find_users_column()
-        self.assertEqual(result, 1)
+        self.assertEqual(0, self.service.find_row_id_column())
 
-    def test_find_users(self):
-        result = self.service.find_users()
-        self.assertEqual(result[:5], ["alice", "bob", "charlie", "dave", "eve"])
+    def test_find_row_ids(self):
+        self.assertEqual(["1", "2", "3", "4", "5", "6"], self.service.find_row_ids())
 
     def test_find_terms(self):
-        result = self.service.find_terms()
         self.assertEqual(
-            result,
             [
                 "買値",
                 "月AM",
@@ -47,12 +43,11 @@ class TestTurnipPriceTableViewService(TestCase):
                 "土AM",
                 "土PM",
             ],
+            self.service.find_terms(),
         )
 
     def test_find_user_history(self):
-        result = self.service.find_user_history("bob")
         self.assertEqual(
-            result,
             [
                 "109",
                 "94",
@@ -68,23 +63,13 @@ class TestTurnipPriceTableViewService(TestCase):
                 "45",
                 "81",
             ],
+            self.service.find_history_by_row_id("2"),
         )
 
-        result = self.service.find_user_history("x")
-        self.assertEqual(result, None)
+        result = self.service.find_history_by_row_id("100")
+        self.assertEqual(None, result)
 
-        result = self.service.find_user_history("alice")
+        result = self.service.find_history_by_row_id("1")
         self.assertEqual(
             result, ["99", "", "64", "", "", "", "", "", "", "", "", "", ""]
         )
-
-
-def service() -> TurnipPriceTableViewService:
-    return TurnipPriceTableViewService(test_table("testdata.tsv"))
-
-
-def test_table(filename):
-    with open(filename, mode="r", newline="", encoding="utf-8") as f:
-        reader = csv.reader(f, delimiter="\t")
-        dat = [row for row in reader]
-    return dat
