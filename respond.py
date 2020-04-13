@@ -16,7 +16,7 @@ class RespondService:
         self.bind_service = bind_service
 
     def respond_to(
-            self, message: discord.Message, request: parse_result.ParseResult
+        self, message: discord.Message, request: parse_result.ParseResult
     ) -> Optional[str]:
         author: discord.Member = message.author
         # FIXME: remove too many if. resolve handler method by type(request).__name__ ?
@@ -28,9 +28,11 @@ class RespondService:
             return self.handle_history_request(author)
         elif isinstance(request, parse_result.EmptyUpdateRequest):
             # TODO: @[kabu] を外部から注入する
-            return "カブ価は入力されていますか？\n" \
-                   "現在時刻で登録する例: `@[kabu] +100`\n" \
-                   "時刻を指定して登録する例: `@[kabu] +100 月AM`"
+            return (
+                "カブ価は入力されていますか？\n"
+                "現在時刻で登録する例: `@[kabu] +100`\n"
+                "時刻を指定して登録する例: `@[kabu] +100 月AM`"
+            )
         elif isinstance(request, parse_result.BindRequest):
             return self.handle_bind_request(author, request)
         elif isinstance(request, parse_result.WhoAmIRequest):
@@ -48,7 +50,7 @@ class RespondService:
             return "実装されていません。"
 
     def handle_update_request(
-            self, author: discord.Member, request: parse_result.UpdateRequest
+        self, author: discord.Member, request: parse_result.UpdateRequest
     ) -> str:
         # get position to write on sheet 0
         sheet_index = 0
@@ -56,19 +58,19 @@ class RespondService:
         table_service = TurnipPriceTableViewService(raw_table)
         name = self.bind_service.find_name(author.id)
         if name is None:
-            return "スプレッドシートでの名前が bot に登録されていません。\n" \
-                   "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+            return (
+                "スプレッドシートでの名前が bot に登録されていません。\n"
+                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+            )
         position = table_service.find_position(name, request.term)
         if isinstance(position, table.UserNotFound):
             logger.info("user not found on table. user: %s", author)
-            return "スプレッドシートからあなたの名前が見つかりませんでした。\n" \
-                   "bot に登録された名前 `%s` は正しいですか？" % name
+            return "スプレッドシートからあなたの名前が見つかりませんでした。\n" "bot に登録された名前 `%s` は正しいですか？" % name
         if not isinstance(position, table.Found):
             logger.error(
                 "user not found on table. user: %s, request: %s", author, request
             )
-            return "[error] スプレッドシートのどこに書けばいいか分かりません。\n" \
-                   "開発者は確認してください。"
+            return "[error] スプレッドシートのどこに書けばいいか分かりません。\n" "開発者は確認してください。"
 
         # try to write
         row, column = position.user_row, position.term_column
@@ -81,8 +83,7 @@ class RespondService:
             )
         except Exception as e:
             logger.error("failed to write to table. error: %s", e, exc_info=True)
-            return "[error] スプレッドシートへの書き込みに失敗しました。\n" \
-                   "開発者は確認してください。"
+            return "[error] スプレッドシートへの書き込みに失敗しました。\n" "開発者は確認してください。"
 
         logger.info(
             "successfully updated. row: %s, column: %s, %s -> %s",
@@ -102,7 +103,13 @@ class RespondService:
             "期間: {} | 元の価格: {} | 新しい価格: {} | スプレッドシートでの名前: `{}`\n"
             "履歴: {}\n"
             "書き込んだセル: 行{} 列{} (0始まり)".format(
-                request.term, org_price, request.price, name, format_history(history), row, column
+                request.term,
+                org_price,
+                request.price,
+                name,
+                format_history(history),
+                row,
+                column,
             )
         )
 
@@ -114,16 +121,17 @@ class RespondService:
         name = self.bind_service.find_name(author.id)
         if name is None:
             # FIXME: dup
-            return "スプレッドシートでの名前が bot に登録されていません。\n" \
-                   "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+            return (
+                "スプレッドシートでの名前が bot に登録されていません。\n"
+                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+            )
         history = table_service.find_user_history(name)
         if history is None:
-            return "スプレッドシートからあなたの名前が見つかりませんでした。\n" \
-                   "bot に登録された名前 `%s` は正しいですか？" % name
+            return "スプレッドシートからあなたの名前が見つかりませんでした。\n" "bot に登録された名前 `%s` は正しいですか？" % name
         return "{}の履歴: {}".format(name, format_history(history))
 
     def handle_bind_request(
-            self, author: discord.Member, request: parse_result.BindRequest
+        self, author: discord.Member, request: parse_result.BindRequest
     ) -> str:
         try:
             self.bind_service.bind(author.id, request.name)
@@ -142,8 +150,12 @@ class RespondService:
             logger.info(
                 "successfully found name but binding not found. author: %s", author
             )
-            return "{} のスプレッドシートでの名前は bot に登録されていません。\n" \
-                   "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。".format(author)
+            return (
+                "{} のスプレッドシートでの名前は bot に登録されていません。\n"
+                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。".format(
+                    author
+                )
+            )
 
 
 def format_history(history: List[str]) -> str:
