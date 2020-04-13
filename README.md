@@ -85,37 +85,54 @@
 
 ## 起動方法
 
+テスト用の以下のものを用意してください。
+
+- スプレッドシート
+  - 内容は本番のものをコピーしておく
+- Discord サーバー
+- https://gspread.readthedocs.io/en/latest/oauth2.html で発行される credentials が書かれた JSON
+
+### docker-compose を使う場合
+
 `secret.env` に秘匿情報を書く。
-`GSPREAD_CREDENTIAL_BASE64` は例の JSON ファイルを base64 エンコードした結果。 
 
 ```shell script
-export GSPREAD_NAME=
-export GSPREAD_CREDENTIAL_BASE64=
-export MONGO_HOST=mongo
-export MONGO_PORT=27017
-export MONGO_INITDB_ROOT_USERNAME=
-export MONGO_INITDB_ROOT_PASSWORD=
-export MONGO_APP_USERNAME=app
-export MONGO_APP_PASSWORD=
-export DISCORD_BOT_TOKEN=
+export GSPREAD_NAME= # URLから推測できるスプレッドシートの名前
+export GSPREAD_CREDENTIAL_BASE64= # credentials 入り JSON を base64 encode したもの (ここどうにかしたい)
+export MONGO_HOST=mongo # docker-compose.yml を使うとこうなる
+export MONGO_PORT=27017 # 同上
+export MONGO_INITDB_ROOT_USERNAME= # `root` とか
+export MONGO_INITDB_ROOT_PASSWORD= # 適当に決める
+export MONGO_APP_USERNAME= # アプリが使う MongoDB のアカウント名 (`app` とか)
+export MONGO_APP_PASSWORD= # 適当に決める
+export DISCORD_BOT_TOKEN= # Discord bot のトークン
 ```
 
-`config.yml` を書く。
+`config.yml` に秘匿する必要がない設定を書く。
 TODO: `mongo_use_inmemory` を `false` にした場合は他の MongoDB 関連の設定を空にしても動くようにする。
 
 ```yaml
-mongo_use_inmemory: false
+mongo_use_inmemory: false # ローカル開発用に用意したが true にして動くかは未確認。
 mongo_database: turnip_bot
 mongo_collection: name_binding
 ```
 
-設定を読み込んでから `docker-compose` で起動する。
+設定を読み込んでから `docker-compose` で起動する。`sudo` を使う場合は `-E` オプションを忘れない。
 
 ```shell script
 $ . secret.env
 $ docker-compose build
 $ docker-compose up
 ```
+
+### docker-compose を使わない場合
+
+1. 上と同じように `secret.env` と `config.yml` を書く
+  - MongoDB の項目は適当なダミー値とする
+1. `main` メソッドをいじって `pymongo_inmemory` を使うようにする (たぶん見ればわかる)
+1. `Pipfile` の `python_version` で指定されているバージョンの Python を用意する
+1. `pipenv install`
+1. `pipenv run python3 main.py` で起動
 
 ## スプレッドシートに書く場所の決定方法
 
@@ -127,4 +144,4 @@ $ docker-compose up
 
 ## Contribution
 
-PR & issue 歓迎です。Python 1 週間なのでまずいところあると思います。
+PR & issue 歓迎です。Python 歴 1 週間なのでまずいところあると思います。
