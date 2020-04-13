@@ -5,19 +5,19 @@ import pymongo
 
 class BindService:
     """
-    bind id to name. it's injective, not one-to-one
+    bind user id to row id. it's injective, not one-to-one
     """
 
     def __init__(self, col: pymongo.collection.Collection):
         self.collection = col
 
-    def bind(self, id_: int, name: str):
-        doc = {"id": id_, "name": name}
-        self.collection.replace_one({"id": id_}, doc, upsert=True)
+    def bind(self, user_id: int, row_id: int):
+        doc = {"user_id": user_id, "row_id": row_id}
+        self.collection.replace_one({"user_id": user_id}, doc, upsert=True)
 
-    def find_name(self, id_: int) -> Optional[str]:
-        res = self.collection.find_one({"id": id_})
+    def find_row_id(self, user_id: int) -> Optional[int]:
+        res = self.collection.find_one({"user_id": user_id})
         if res is None:
             return None
         else:
-            return res["name"]
+            return res["row_id"]
