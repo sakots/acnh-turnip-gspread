@@ -37,10 +37,10 @@ class TestParseService(TestCase):
         botuser = bot()
         service = parse.ParseService(botuser)
         self.assertEqual(
-            parse_result.BindRequest("ー"), service.recognize(make_massage("iamー"))
+            parse_result.BindRequest("ー"), service.recognize(make_massage("imー"))
         )
         self.assertEqual(
-            parse_result.BindRequest("ー"), service.recognize(make_massage("iam ー"))
+            parse_result.BindRequest("ー"), service.recognize(make_massage("im ー"))
         )
         self.assertEqual(
             parse_result.BindRequest("🍎"), service.recognize(make_massage("im🍎"))
