@@ -14,9 +14,31 @@ class TestParseService(TestCase):
         self.assertEqual(parse.normalize("＋１００"), "+100")
         self.assertEqual(parse.normalize("ＡＢＣ"), "abc")
 
-    def test_recognize_update(self):
+    def test_recognize_from_bot(self):
         botuser = bot()
         service = parse.ParseService(botuser)
+        message = make_massage("+100")
+        message.author = botuser
+        result = service.recognize(message)
+        self.assertTrue(isinstance(result, parse_result.IgnorableRequest))
+
+    def test_recognize_not_mention(self):
+        botuser = bot()
+        service = parse.ParseService(botuser)
+        message = make_massage("+100")
+        service.recognize(message)
+        message.mentions = []
+        result = service.recognize(message)
+        self.assertTrue(isinstance(result, parse_result.IgnorableRequest))
+
+    def test_recognize_empty(self):
+        service = parse.ParseService(bot())
+        self.assertEqual(service.recognize(make_massage("")), parse_result.EmptyRequest())
+        self.assertEqual(service.recognize(make_massage(" ")), parse_result.EmptyRequest())
+        self.assertEqual(service.recognize(make_massage("　")), parse_result.EmptyRequest())
+
+    def test_recognize_update(self):
+        service = parse.ParseService(bot())
 
         base = ["月曜午前", "月AM", "午前月曜", "AM月", "AM月　　"]
         small = map(lambda x: x.lower(), base)
@@ -33,9 +55,19 @@ class TestParseService(TestCase):
             expected = parse_result.UpdateRequest("月AM", 100)
             self.assertEqual(service.recognize(message), expected)
 
+    def test_recognize_hist(self):
+        service = parse.ParseService(bot())
+        self.assertEqual(service.recognize(make_massage("hist")), parse_result.HistoryRequest())
+        self.assertEqual(service.recognize(make_massage("history")), parse_result.HistoryRequest())
+
     def test_recognize_bind(self):
-        botuser = bot()
-        service = parse.ParseService(botuser)
+        service = parse.ParseService(bot())
+        self.assertEqual(
+            parse_result.BindRequest("alice"), service.recognize(make_massage("im　alice"))
+        )
+        self.assertEqual(
+            parse_result.BindRequest("ありす"), service.recognize(make_massage("im　ありす"))
+        )
         self.assertEqual(
             parse_result.BindRequest("ー"), service.recognize(make_massage("imー"))
         )
@@ -46,30 +78,23 @@ class TestParseService(TestCase):
             parse_result.BindRequest("🍎"), service.recognize(make_massage("im🍎"))
         )
 
-    def test_no_price(self):
-        botuser = bot()
-        service = parse.ParseService(botuser)
-        bad_cases = ["+", "+月曜AM 月曜AM", "+a b"]
-        for c in bad_cases:
-            result = service.recognize(make_massage(c))
-            self.assertEqual(result, parse_result.InvalidUpdateRequest())
+    def test_recognize_who(self):
+        service = parse.ParseService(bot())
+        self.assertEqual(
+            parse_result.WhoAmIRequest(), service.recognize(make_massage("who"))
+        )
 
-    def test_from_bot(self):
-        botuser = bot()
-        service = parse.ParseService(botuser)
-        message = make_massage("+100")
-        message.author = botuser
-        result = service.recognize(message)
-        self.assertTrue(isinstance(result, parse_result.IgnorableRequest))
+    def test_recognize_echo(self):
+        service = parse.ParseService(bot())
+        self.assertEqual(
+            parse_result.EchoRequest("echo"), service.recognize(make_massage("echo"))
+        )
 
-    def test_not_mention(self):
-        botuser = bot()
-        service = parse.ParseService(botuser)
-        message = make_massage("+100")
-        service.recognize(message)
-        message.mentions = []
-        result = service.recognize(message)
-        self.assertTrue(isinstance(result, parse_result.IgnorableRequest))
+    def test_recognize_unknown(self):
+        service = parse.ParseService(bot())
+        self.assertEqual(
+            parse_result.UnknownRequest(), service.recognize(make_massage("excellent"))
+        )
 
     def test_parse_update_command(self):
         #       April 2020
@@ -85,6 +110,11 @@ class TestParseService(TestCase):
                 datetime.datetime(2020, 4, 15, 11, 0, 0),
                 parse_result.UpdateRequest("水AM", 100),
                 "水曜午前",
+            ),            (
+                "水am",
+                datetime.datetime(2020, 4, 15, 11, 0, 0),
+                parse_result.InvalidUpdateRequest(),
+                "価格が空",
             ),
             (
                 "100 水pm",
@@ -160,6 +190,9 @@ def bot():
 
 
 def make_massage(content: str):
+    """
+    content を bot にリプライするメッセージを返す
+    """
     message = Mock()
     message.author.bot = False
     message.content = "<@!{}> {}".format(bot().id, content)

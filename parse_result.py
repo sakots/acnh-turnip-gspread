@@ -26,6 +26,7 @@ class BindRequest(ParseResult):
     name: str
 
 
+@dataclass
 class WhoAmIRequest(ParseResult):
     pass
 
