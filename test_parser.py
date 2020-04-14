@@ -17,7 +17,7 @@ class TestParseService(TestCase):
     def test_recognize_from_bot(self):
         botuser = bot()
         service = parse.ParseService(botuser)
-        message = make_massage("+100")
+        message = make_mention("+100")
         message.author = botuser
         result = service.recognize(message)
         self.assertTrue(isinstance(result, parse_result.IgnorableRequest))
@@ -25,7 +25,7 @@ class TestParseService(TestCase):
     def test_recognize_not_mention(self):
         botuser = bot()
         service = parse.ParseService(botuser)
-        message = make_massage("+100")
+        message = make_mention("+100")
         service.recognize(message)
         message.mentions = []
         result = service.recognize(message)
@@ -33,9 +33,9 @@ class TestParseService(TestCase):
 
     def test_recognize_empty(self):
         service = parse.ParseService(bot())
-        self.assertEqual(service.recognize(make_massage("")), parse_result.EmptyRequest())
-        self.assertEqual(service.recognize(make_massage(" ")), parse_result.EmptyRequest())
-        self.assertEqual(service.recognize(make_massage("　")), parse_result.EmptyRequest())
+        self.assertEqual(service.recognize(make_mention("")), parse_result.EmptyRequest())
+        self.assertEqual(service.recognize(make_mention(" ")), parse_result.EmptyRequest())
+        self.assertEqual(service.recognize(make_mention("　")), parse_result.EmptyRequest())
 
     def test_recognize_update(self):
         service = parse.ParseService(bot())
@@ -51,49 +51,49 @@ class TestParseService(TestCase):
         )
 
         for c in ok_cases:
-            message = make_massage(c)
+            message = make_mention(c)
             expected = parse_result.UpdateRequest("月AM", 100)
             self.assertEqual(service.recognize(message), expected)
 
     def test_recognize_hist(self):
         service = parse.ParseService(bot())
-        self.assertEqual(service.recognize(make_massage("hist")), parse_result.HistoryRequest())
-        self.assertEqual(service.recognize(make_massage("history")), parse_result.HistoryRequest())
+        self.assertEqual(service.recognize(make_mention("hist")), parse_result.HistoryRequest())
+        self.assertEqual(service.recognize(make_mention("history")), parse_result.HistoryRequest())
 
     def test_recognize_bind(self):
         service = parse.ParseService(bot())
         self.assertEqual(
-            parse_result.BindRequest("alice"), service.recognize(make_massage("im　alice"))
+            parse_result.BindRequest("alice"), service.recognize(make_mention("im　alice"))
         )
         self.assertEqual(
-            parse_result.BindRequest("ありす"), service.recognize(make_massage("im　ありす"))
+            parse_result.BindRequest("ありす"), service.recognize(make_mention("im　ありす"))
         )
         self.assertEqual(
-            parse_result.BindRequest("ー"), service.recognize(make_massage("imー"))
+            parse_result.BindRequest("ー"), service.recognize(make_mention("imー"))
         )
         self.assertEqual(
-            parse_result.BindRequest("ー"), service.recognize(make_massage("im ー"))
+            parse_result.BindRequest("ー"), service.recognize(make_mention("im ー"))
         )
         self.assertEqual(
-            parse_result.BindRequest("🍎"), service.recognize(make_massage("im🍎"))
+            parse_result.BindRequest("🍎"), service.recognize(make_mention("im🍎"))
         )
 
     def test_recognize_who(self):
         service = parse.ParseService(bot())
         self.assertEqual(
-            parse_result.WhoAmIRequest(), service.recognize(make_massage("who"))
+            parse_result.WhoAmIRequest(), service.recognize(make_mention("who"))
         )
 
     def test_recognize_echo(self):
         service = parse.ParseService(bot())
         self.assertEqual(
-            parse_result.EchoRequest("echo"), service.recognize(make_massage("echo"))
+            parse_result.EchoRequest("echo"), service.recognize(make_mention("echo"))
         )
 
     def test_recognize_unknown(self):
         service = parse.ParseService(bot())
         self.assertEqual(
-            parse_result.UnknownRequest(), service.recognize(make_massage("excellent"))
+            parse_result.UnknownRequest(), service.recognize(make_mention("excellent"))
         )
 
     def test_parse_update_command(self):
@@ -189,9 +189,9 @@ def bot():
     return bot
 
 
-def make_massage(content: str):
+def make_mention(content: str):
     """
-    content を bot にリプライするメッセージを返す
+    content を bot にメンションするメッセージを返す
     """
     message = Mock()
     message.author.bot = False
