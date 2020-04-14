@@ -15,7 +15,7 @@ class BindService:
         doc = {"user_id": user_id, "row_id": row_id}
         self.collection.replace_one({"user_id": user_id}, doc, upsert=True)
 
-    def find_row_id(self, user_id: int) -> Optional[int]:
+    def find_row_id(self, user_id: int) -> Optional[str]:
         res = self.collection.find_one({"user_id": user_id})
         if res is None:
             return None

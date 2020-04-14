@@ -56,19 +56,21 @@ class RespondService:
         sheet_index = 0
         raw_table = self.gspread_service.get_table(sheet_index)
         table_service = TurnipPriceTableViewService(raw_table)
-        name = self.bind_service.find_name(author.id)
-        if name is None:
+        row_id = self.bind_service.find_row_id(author.id)
+        if row_id is None:
+            table_service.find_row_ids()
             return (
-                "スプレッドシートでの名前が bot に登録されていません。\n"
-                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+                "スプレッドシートのあなたの行を知りません。\n"
+                "この中にあなたの番号と名前があるなら `@[kabu] id [番号]` とリプライして教えてください。\n"
+                "無いなら `@[kabu] new` とリプライすると新しくあなたの行を作ります。"
             )
-        position = table_service.find_position(name, request.term)
+        position = table_service.find_position(row_id, request.term)
         if isinstance(position, table.UserNotFound):
-            logger.info("user not found on table. user: %s", author)
-            return "スプレッドシートからあなたの名前が見つかりませんでした。\n" "bot に登録された名前 `%s` は正しいですか？" % name
+            logger.info("row id not found on table. row id: %s", row_id)
+            return "スプレッドシートからあなたの行が見つかりませんでした。\n" "bot に登録された行ID `%s` は正しいですか？" % row
         if not isinstance(position, table.Found):
             logger.error(
-                "user not found on table. user: %s, request: %s", author, request
+                "row not found on table. row_id: %s, request: %s", row_id, request
             )
             return "[error] スプレッドシートのどこに書けばいいか分かりません。\n" "開発者は確認してください。"
 
@@ -95,7 +97,7 @@ class RespondService:
 
         # get history
         _, column_left, column_right = table_service.find_terms_range()
-        history = table_service.find_user_history(name)
+        history = table_service.find_history_by_row_id(row_id)
 
         logger.info("history: %s", history)
         return (
@@ -106,7 +108,7 @@ class RespondService:
                 request.term,
                 org_price,
                 request.price,
-                name,
+                row,
                 format_history(history),
                 row,
                 column,
@@ -125,7 +127,7 @@ class RespondService:
                 "スプレッドシートでの名前が bot に登録されていません。\n"
                 "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
             )
-        history = table_service.find_user_history(name)
+        history = table_service.find_history_by_row_id(name)
         if history is None:
             return "スプレッドシートからあなたの名前が見つかりませんでした。\n" "bot に登録された名前 `%s` は正しいですか？" % name
         return "{}の履歴: {}".format(name, format_history(history))

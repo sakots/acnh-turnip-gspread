@@ -33,6 +33,9 @@ class TermNotFound(FindResult):
 # 一致するセルがある列を行ID列とする
 ROW_IDS_COLUMN_IDENTIFIER = "ID"
 
+# 一致するセルがある列を名前列とする
+NAMES_COLUMN_IDENTIFIER = "なまえ"
+
 # 一致するセルがある行を期間行とする
 TERMS_ROW_IDENTIFIER = "買値"
 
