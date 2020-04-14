@@ -17,7 +17,7 @@ class HistoryRequest(ParseResult):
 
 
 @dataclass
-class EmptyUpdateRequest(ParseResult):
+class InvalidUpdateRequest(ParseResult):
     pass
 
 

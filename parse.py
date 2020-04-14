@@ -102,6 +102,7 @@ def parse_update_command(
     normalized_command: str, current: datetime.datetime
 ) -> parse_result.ParseResult:
     """
+    半角小文字に正規化された更新コマンドをパースする
     example:
     - 午前 100
     - 100 午前
@@ -111,26 +112,58 @@ def parse_update_command(
     - 買い 100
     - 買値 100
     """
+
+    ISO_WEEKDAYS = ["買値", "月", "火", "水", "木", "金", "土"]
+    TERMS = [
+        "買値",
+        "買値",
+        "月AM",
+        "月PM",
+        "火PM",
+        "火AM",
+        "水PM",
+        "水AM",
+        "水PM",
+        "木AM",
+        "木PM",
+        "金AM",
+        "金PM",
+        "土AM",
+        "土PM",
+    ]
+
+    # read price
+    price = None
+    m = re.search(r"[0-9]+", normalized_command)
+    if m is not None:
+        price = int(m.group())
+    if price is None:
+        return parse_result.InvalidUpdateRequest()
+
+    # read term or use current if not given
     # read weekday
     weekday = None
-    wds = ["月", "火", "水", "木", "金", "土", "買値"]
-    for wd in wds:
+    for wd in ISO_WEEKDAYS:
         if wd in normalized_command:
             weekday = wd
             break
     if "買" in normalized_command:
         weekday = "買値"
-    if weekday is None:
-        weekday = wds[current.weekday() % len(wds)]
 
     # read am. or pm.
     ampm = None
     for am in ["am", "午前", "ごぜん", "gozen"]:
         if am in normalized_command:
             ampm = "AM"
-    for pm in ["pm", "ごご", "ごご", "gogo"]:
+    for pm in ["pm", "午後", "ごご", "gogo"]:
         if pm in normalized_command:
             ampm = "PM"
+
+    if weekday != "買値" and (weekday is None) != (ampm is None):
+        return parse_result.InvalidUpdateRequest()
+
+    if weekday is None:
+        weekday = ISO_WEEKDAYS[current.isoweekday() % len(ISO_WEEKDAYS)]
     if ampm is None:
         ampm = "AM" if current.hour < 12 else "PM"
 
@@ -138,14 +171,5 @@ def parse_update_command(
         term: str = weekday
     else:
         term: str = "{}{}".format(weekday, ampm)
-
-    # read price
-    price = None
-    m = re.search(r"[0-9]+", normalized_command)
-    if m is not None:
-        price = int(m.group())
-
-    if price is None:
-        return parse_result.EmptyUpdateRequest()
 
     return parse_result.UpdateRequest(term, price)

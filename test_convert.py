@@ -52,7 +52,7 @@ class TestParseService(TestCase):
         bad_cases = ["+", "+月曜AM 月曜AM", "+a b"]
         for c in bad_cases:
             result = service.recognize(make_massage(c))
-            self.assertEqual(result, parse_result.EmptyUpdateRequest())
+            self.assertEqual(result, parse_result.InvalidUpdateRequest())
 
     def test_from_bot(self):
         botuser = bot()
@@ -73,7 +73,7 @@ class TestParseService(TestCase):
 
     def test_parse_update_command_monday(self):
         current = datetime.datetime(2020, 4, 6, 11, 30, 0)
-        testcases = ["月am 100", "月 100", "月　100", "100"]
+        testcases = ["月am 100", "100 月am"]
         for command in testcases:
             result = parse.parse_update_command(command, current)
             self.assertEqual(result, parse_result.UpdateRequest("月AM", 100))

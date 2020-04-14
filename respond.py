@@ -26,12 +26,13 @@ class RespondService:
             return self.handle_update_request(author, request)
         elif isinstance(request, parse_result.HistoryRequest):
             return self.handle_history_request(author)
-        elif isinstance(request, parse_result.EmptyUpdateRequest):
+        elif isinstance(request, parse_result.InvalidUpdateRequest):
             # TODO: @[kabu] を外部から注入する
             return (
-                "カブ価は入力されていますか？\n"
-                "現在時刻で登録する例: `@[kabu] +100`\n"
-                "時刻を指定して登録する例: `@[kabu] +100 月AM`"
+                "カブ価と期間は正しく入力されていますか？\n"
+                "現在時刻で登録: `@[kabu] +100`\n"
+                "売値を期間を指定して登録: `@[kabu] +100 月AM` (この場合曜日と午前午後の両方必要です)"
+                "買値登録: `@[kabu] +100 買い`"
             )
         elif isinstance(request, parse_result.BindRequest):
             return self.handle_bind_request(author, request)
