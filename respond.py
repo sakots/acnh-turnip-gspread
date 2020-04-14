@@ -31,7 +31,7 @@ class RespondService:
             return (
                 "カブ価と期間は正しく入力されていますか？\n"
                 "現在時刻で登録: `@[kabu] +100`\n"
-                "売値を期間を指定して登録: `@[kabu] +100 月AM` (この場合曜日と午前午後の両方必要です)"
+                "売値を期間を指定して登録: `@[kabu] +100 月AM` (曜日と午前午後の両方必要です)"
                 "買値登録: `@[kabu] +100 買い`"
             )
         elif isinstance(request, parse_result.BindRequest):

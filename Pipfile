@@ -15,6 +15,7 @@ coloredlogs = "*"
 pymongo-inmemory = "*"
 pymongo = "*"
 pyyaml = "*"
+coverage = "*"
 
 [requires]
 python_version = "3.8"

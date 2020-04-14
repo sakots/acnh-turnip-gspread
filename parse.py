@@ -119,9 +119,8 @@ def parse_update_command(
         "買値",
         "月AM",
         "月PM",
-        "火PM",
         "火AM",
-        "水PM",
+        "火PM",
         "水AM",
         "水PM",
         "木AM",
@@ -161,15 +160,19 @@ def parse_update_command(
 
     if weekday != "買値" and (weekday is None) != (ampm is None):
         return parse_result.InvalidUpdateRequest()
-
-    if weekday is None:
+    # use current
+    backward = False
+    if (weekday is None) and (ampm is None):
         weekday = ISO_WEEKDAYS[current.isoweekday() % len(ISO_WEEKDAYS)]
-    if ampm is None:
         ampm = "AM" if current.hour < 12 else "PM"
+        backward = current.hour < 5
 
     if weekday == "買値":
         term: str = weekday
     else:
         term: str = "{}{}".format(weekday, ampm)
 
+    if backward:
+        index = TERMS.index(term)
+        term = TERMS[(index - 1) % len(TERMS)]  # (-1) % 3 == 2 in Python
     return parse_result.UpdateRequest(term, price)
