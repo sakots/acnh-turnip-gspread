@@ -158,11 +158,14 @@ def parse_update_command(
         if pm in normalized_command:
             ampm = "PM"
 
+    # どちらも指定されていない
     if weekday != "買値" and (weekday is None) != (ampm is None):
+        logger.info("invalid update request. none or both of weekday and ampm must be specified. weekday=%s, ampm=%s", weekday, ampm)
         return parse_result.InvalidUpdateRequest()
     # use current
     backward = False
     if (weekday is None) and (ampm is None):
+        logger.info("term is not specified. use current time")
         weekday = ISO_WEEKDAYS[current.isoweekday() % len(ISO_WEEKDAYS)]
         ampm = "AM" if current.hour < 12 else "PM"
         backward = current.hour < 5
@@ -172,7 +175,9 @@ def parse_update_command(
     else:
         term: str = "{}{}".format(weekday, ampm)
 
+    # 午前5時前なら1つ戻す
     if backward:
+        logger.info("term is not specified and hour=%s, go backward", current.hour)
         index = TERMS.index(term)
         term = TERMS[(index - 1) % len(TERMS)]  # (-1) % 3 == 2 in Python
     return parse_result.UpdateRequest(term, price)
