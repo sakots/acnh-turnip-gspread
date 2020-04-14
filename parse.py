@@ -102,6 +102,7 @@ def parse_update_command(
     normalized_command: str, current: datetime.datetime
 ) -> parse_result.ParseResult:
     """
+    半角小文字に正規化された更新コマンドをパースする
     example:
     - 午前 100
     - 100 午前
@@ -111,41 +112,72 @@ def parse_update_command(
     - 買い 100
     - 買値 100
     """
-    # read weekday
-    weekday = None
-    wds = ["月", "火", "水", "木", "金", "土", "買値"]
-    for wd in wds:
-        if wd in normalized_command:
-            weekday = wd
-            break
-    if "買" in normalized_command:
-        weekday = "買値"
-    if weekday is None:
-        weekday = wds[current.weekday() % len(wds)]
 
-    # read am. or pm.
-    ampm = None
-    for am in ["am", "午前", "ごぜん", "gozen"]:
-        if am in normalized_command:
-            ampm = "AM"
-    for pm in ["pm", "ごご", "ごご", "gogo"]:
-        if pm in normalized_command:
-            ampm = "PM"
-    if ampm is None:
-        ampm = "AM" if current.hour < 12 else "PM"
-
-    if weekday == "買値":
-        term: str = weekday
-    else:
-        term: str = "{}{}".format(weekday, ampm)
+    ISO_WEEKDAYS = ["買値", "月", "火", "水", "木", "金", "土"]
+    TERMS = [
+        "買値",
+        "買値",
+        "月AM",
+        "月PM",
+        "火AM",
+        "火PM",
+        "水AM",
+        "水PM",
+        "木AM",
+        "木PM",
+        "金AM",
+        "金PM",
+        "土AM",
+        "土PM",
+    ]
 
     # read price
     price = None
     m = re.search(r"[0-9]+", normalized_command)
     if m is not None:
         price = int(m.group())
-
     if price is None:
-        return parse_result.EmptyUpdateRequest()
+        return parse_result.InvalidUpdateRequest()
 
+    # read term or use current if not given
+    # read weekday
+    weekday = None
+    for wd in ISO_WEEKDAYS:
+        if wd in normalized_command:
+            weekday = wd
+            break
+    if "買" in normalized_command:
+        weekday = "買値"
+
+    # read am. or pm.
+    ampm = None
+    for am in ["am", "午前", "ごぜん", "gozen"]:
+        if am in normalized_command:
+            ampm = "AM"
+    for pm in ["pm", "午後", "ごご", "gogo"]:
+        if pm in normalized_command:
+            ampm = "PM"
+
+    # どちらも指定されていない
+    if weekday != "買値" and (weekday is None) != (ampm is None):
+        logger.info("invalid update request. none or both of weekday and ampm must be specified. weekday=%s, ampm=%s", weekday, ampm)
+        return parse_result.InvalidUpdateRequest()
+    # use current
+    backward = False
+    if (weekday is None) and (ampm is None):
+        logger.info("term is not specified. use current time")
+        weekday = ISO_WEEKDAYS[current.isoweekday() % len(ISO_WEEKDAYS)]
+        ampm = "AM" if current.hour < 12 else "PM"
+        backward = current.hour < 5
+
+    if weekday == "買値":
+        term: str = weekday
+    else:
+        term: str = "{}{}".format(weekday, ampm)
+
+    # 午前5時前なら1つ戻す
+    if backward:
+        logger.info("term is not specified and hour=%s, go backward", current.hour)
+        index = TERMS.index(term)
+        term = TERMS[(index - 1) % len(TERMS)]  # (-1) % 3 == 2 in Python
     return parse_result.UpdateRequest(term, price)

@@ -17,7 +17,7 @@ class HistoryRequest(ParseResult):
 
 
 @dataclass
-class EmptyUpdateRequest(ParseResult):
+class InvalidUpdateRequest(ParseResult):
     pass
 
 
@@ -26,6 +26,7 @@ class BindRequest(ParseResult):
     name: str
 
 
+@dataclass
 class WhoAmIRequest(ParseResult):
     pass
 
