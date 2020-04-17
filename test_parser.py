@@ -44,11 +44,8 @@ class TestParseService(TestCase):
         small = map(lambda x: x.lower(), base)
         ja = map(lambda x: jaconv.h2z(x, kana=False, digit=True, ascii=True), base)
         term = list(itertools.chain(base, small, ja))
-        ok_cases = (
-            ["+100 {}".format(c) for c in term]
-            + ["＋１００ {}".format(c) for c in term]
-            + ["+{} 100".format(c) for c in term]
-        )
+        pat = ["+100 {}", "＋１００ {}", "+{} 100", "100 {}", "１００ {}"]
+        ok_cases = [c.format(d) for c in pat for d in term]
 
         for c in ok_cases:
             message = make_mention(c)

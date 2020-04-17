@@ -37,6 +37,9 @@ class ParseService:
         m = re.search(r"^\+(.*)", normalized_body)
         if m:
             return parse_update_command(m.group(1).strip(), message_time)
+        m = re.search(r"^[0-9].*", normalized_body)
+        if m:
+            return parse_update_command(m.group().strip(), message_time)
 
         m = re.search(r"^hist", normalized_body)
         if m:
