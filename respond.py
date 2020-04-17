@@ -61,7 +61,7 @@ class RespondService:
         if name is None:
             return (
                 "スプレッドシートでの名前が bot に登録されていません。\n"
-                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+                "スプレッドシートに名前を入力してから `@[kabu] im [スプレッドシートでの名前]` とリプライして登録してください。"
             )
         position = table_service.find_position(name, request.term)
         if isinstance(position, table.UserNotFound):
@@ -124,7 +124,7 @@ class RespondService:
             # FIXME: dup
             return (
                 "スプレッドシートでの名前が bot に登録されていません。\n"
-                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。"
+                "スプレッドシートに名前を入力してから `@[kabu] im [スプレッドシートでの名前]` とリプライして登録してください。"
             )
         history = table_service.find_user_history(name)
         if history is None:
@@ -153,7 +153,7 @@ class RespondService:
             )
             return (
                 "{} のスプレッドシートでの名前は bot に登録されていません。\n"
-                "スプレッドシートに名前を入力してから `@[kabu] iam [スプレッドシートでの名前]` とリプライして登録してください。".format(
+                "スプレッドシートに名前を入力してから `@[kabu] im [スプレッドシートでの名前]` とリプライして登録してください。".format(
                     author
                 )
             )
