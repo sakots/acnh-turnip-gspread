@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eux
 
-. ./secret.env
+. ./secret.sh
 python3 main.py --config config.yml
