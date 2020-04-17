@@ -5,7 +5,7 @@ import pymongo
 
 class BindService:
     """
-    bind id to name. it's injective, not one-to-one
+    bind id to name (N-to-one).
     """
 
     def __init__(self, col: pymongo.collection.Collection):
