@@ -100,6 +100,7 @@ class RespondService:
 
         logger.info("history: %s", history)
         return (
+            "スプレッドシートに書きました。\n"
             "期間: {} | 元の価格: {} | 新しい価格: {} | スプレッドシートでの名前: `{}`\n"
             "履歴: {}\n"
             "予測: {}\n".format(
