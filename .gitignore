@@ -142,6 +142,6 @@ cython_debug/
 ## this repository specific
 /.idea
 /*.json
-/secret.env
+/secret.sh
 /db
 /configdb

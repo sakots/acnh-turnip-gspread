@@ -105,7 +105,9 @@
 
 ### docker-compose を使う場合
 
-`secret.env` に秘匿情報を書く。
+`secret.sh` に秘匿情報を書く。
+`GSPREAD_NAME` はURLから推測できます。
+`https://docs.google.com/spreadsheets/d/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/edit#gid=2079307093` の `XXX...` の部分です。
 
 ```shell script
 export GSPREAD_NAME= # URLから推測できるスプレッドシートの名前
@@ -131,14 +133,14 @@ mongo_collection: name_binding
 設定を読み込んでから `docker-compose` で起動する。`sudo` を使う場合は `-E` オプションを忘れない。
 
 ```shell script
-$ . secret.env
+$ . secret.sh
 $ docker-compose build
 $ docker-compose up
 ```
 
 ### docker-compose を使わない場合
 
-1. 上と同じように `secret.env` と `config.yml` を書く
+1. 上と同じように `secret.sh` と `config.yml` を書く
   - MongoDB の項目は適当なダミー値とする
 1. `main` メソッドをいじって `pymongo_inmemory` を使うようにする (たぶん見ればわかる)
 1. `Pipfile` の `python_version` で指定されているバージョンの Python を用意する
