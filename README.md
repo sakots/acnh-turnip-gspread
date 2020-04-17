@@ -103,14 +103,15 @@
 
 ### docker-compose を使う場合
 
+#### 設定
+
 `secret.sh` に秘匿情報を書く。
-`GSPREAD_NAME` はURLから推測できます。
-`https://docs.google.com/spreadsheets/d/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/edit#gid=2079307093` の `XXX...` の部分です。
+`GSPREAD_NAME` はスプレッドシートの URL `https://docs.google.com/spreadsheets/d/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/edit#gid=2079307093` の `XXX...` の部分です。
 
 ```shell script
 export GSPREAD_NAME= # URLから推測できるスプレッドシートの名前
 export GSPREAD_CREDENTIAL_BASE64= # credentials 入り JSON を base64 encode したもの (ここどうにかしたい)
-export MONGO_HOST=mongo # docker-compose.yml を使うとこうなる
+export MONGO_HOST=mongo # 同梱の docker-compose.yml を使う場合こうする
 export MONGO_PORT=27017 # 同上
 export MONGO_INITDB_ROOT_USERNAME= # `root` とか
 export MONGO_INITDB_ROOT_PASSWORD= # 適当に決める
@@ -120,13 +121,14 @@ export DISCORD_BOT_TOKEN= # Discord bot のトークン
 ```
 
 `config.yml` に秘匿する必要がない設定を書く。
-TODO: `mongo_use_inmemory` を `false` にした場合は他の MongoDB 関連の設定を空にしても動くようにする。
 
 ```yaml
-mongo_use_inmemory: false # ローカル開発用に用意したが true にして動くかは未確認。
+mongo_use_inmemory: false
 mongo_database: turnip_bot
 mongo_collection: name_binding
 ```
+
+#### 起動
 
 設定を読み込んでから `docker-compose` で起動する。`sudo` を使う場合は `-E` オプションを忘れない。
 
@@ -136,14 +138,16 @@ $ docker-compose build
 $ docker-compose up
 ```
 
-### docker-compose を使わない場合
+### Docker を使わない場合
 
-1. 上と同じように `secret.sh` と `config.yml` を書く
-  - MongoDB の項目は適当なダミー値とする
-1. `main` メソッドをいじって `pymongo_inmemory` を使うようにする (たぶん見ればわかる)
 1. `Pipfile` の `python_version` で指定されているバージョンの Python を用意する
+1. `secret.sh` と `config.yml` を書く
+    1. 基本的に上と同じだが、MongoDB はインメモリ版を使う
+        1. `secret.sh` で `MONGO_*` を消す
+        1. `config.yml` で `mongo_use_inmemory: true` とする
+1. `pip install pipenv`
 1. `pipenv install`
-1. `pipenv run python3 main.py` で起動
+1. `pipenv run python main.py --config config.yml` で起動
 
 ## スプレッドシートに書く場所の決定方法
 

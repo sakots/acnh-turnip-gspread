@@ -45,7 +45,7 @@ def main():
     gspread_service = gspreads.GspreadService(config["gspread_name"], credential)
 
     # mongodb
-    if config.get("mongodb_use_inmemory") or False:
+    if config.get("mongo_use_inmemory"):
         logger.info("use pymongo_inmemory client")
         import pymongo_inmemory
 
