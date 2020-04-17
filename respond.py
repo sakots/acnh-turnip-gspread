@@ -100,17 +100,15 @@ class RespondService:
 
         logger.info("history: %s", history)
         return (
-            "スプレッドシートに書きました。\n"
             "期間: {} | 元の価格: {} | 新しい価格: {} | スプレッドシートでの名前: `{}`\n"
             "履歴: {}\n"
-            "書き込んだセル: 行{} 列{} (0始まり)".format(
+            "予測: {}\n".format(
                 request.term,
                 org_price,
                 request.price,
                 name,
                 format_history(history),
-                row,
-                column,
+                prediction_url(history),
             )
         )
 
@@ -163,7 +161,7 @@ def format_history(history: List[str]) -> str:
     if len(history) != 13:
         raise ValueError("length must be 13")
     res = "%s" % history[0]
-    for i in list(range(1, 13, 2)):
+    for i in range(1, 13, 2):
         am, pm = history[i], history[i + 1]
         res += " %s/%s" % (format_price(am), format_price(pm))
     return res
@@ -173,3 +171,21 @@ def format_price(price) -> str:
     if (price or "").strip() == "":
         price = "-"
     return price
+
+
+def prediction_url(history: List[str]) -> str:
+    """
+    予測ツールのURLを返す 最後までURL判定されるように末尾に&を付ける
+    https://turnipprophet.io/?prices=100.50.40..........&
+    """
+    if len(history) != 13:
+        raise ValueError("length must be 13")
+    res = "https://turnipprophet.io/?prices=%s" % history[0]
+    for p in history[1:]:
+        s = ""
+        if p is None:
+            s = ""
+        else:
+            s = (str(p) or "").strip()
+        res += ".%s" % s
+    return res + "&"
