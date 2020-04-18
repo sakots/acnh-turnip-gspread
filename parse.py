@@ -184,7 +184,9 @@ def parse_update_command(
 
     # 午前5時前なら1つ戻す
     if backward:
-        logger.info("term is not specified and hour=%s, go backward", current.hour)
+        logger.info(
+            "term is not specified and hour=%s, treat it as yesterday", current.hour
+        )
         index = TERMS.index(term)
         term = TERMS[(index - 1) % len(TERMS)]  # (-1) % 3 == 2 in Python
     return parse_result.UpdateRequest(term, price)
