@@ -112,13 +112,13 @@ class RespondService:
 
         logger.info("history: %s", history)
         change = "%s %s→%s" % (request.term, org_price, request.price)
+        hist = "%s (%s)" % (format_history(history), prediction_link("予測", history))
         return response.success(
             title="スプレッドシートに書きました",
             fields=[
                 ("変更内容", change),
                 ("名前", "`%s`" % name),
-                ("履歴", format_history(history)),
-                ("予測", prediction_link(history)),
+                ("履歴", hist),
             ],
         )
 
@@ -145,7 +145,7 @@ class RespondService:
             )
         return response.success(
             title="履歴です",
-            fields=[("履歴", format_history(history)), ("予測", prediction_link(history))],
+            fields=[("履歴", format_history(history)), ("予測", prediction_link("Turnip Prophet", history))],
         )
 
     def handle_bind_request(
@@ -223,9 +223,9 @@ def prediction_url(history: List[str]) -> str:
     return "https://turnipprophet.io/?prices=%s&" % a
 
 
-def prediction_link(history: List[str]) -> str:
+def prediction_link(text: str, history: List[str]) -> str:
     """
     予測ツールのURLをマークダウンのリンクのフォーマットにして返す
     https://turnipprophet.io/?prices=100.50.40..........&
     """
-    return "[Turnip Prophet](%s)" % prediction_url(history)
+    return "[%s](%s)" % (text, prediction_url(history))
