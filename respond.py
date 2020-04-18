@@ -111,7 +111,10 @@ class RespondService:
         history = table_service.find_user_history(name)
 
         logger.info("history: %s", history)
-        change = "%s %s→%s" % (request.term, org_price, request.price)
+        if org_price == "-":
+            change = "%s %s" % (request.term, request.price)
+        else:
+            change = "%s %s→%s" % (request.term, org_price, request.price)
         hist = "%s (%s)" % (format_history(history), prediction_link("予測", history))
         return response.success(
             title="スプレッドシートに書きました",
