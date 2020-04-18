@@ -56,5 +56,14 @@ class TurnipPriceBotService:
         if response is not None:
             await message.channel.send(response.content, embed=response.embed)
             logger.info(
-                "message sent. response: %s, in reply to %s", response, message.id
+                "message sent in reply to %s, content: %s", message.id, response.content
             )
+            if response.embed is not None:
+                embed = response.embed
+                logger.info(
+                    "reply to %s contains embed. title: %s, description: %s, fields: %s",
+                    message.id,
+                    embed.title,
+                    embed.description,
+                    embed.fields,
+                )
