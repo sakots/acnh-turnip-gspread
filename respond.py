@@ -128,8 +128,9 @@ class RespondService:
         history = table_service.find_user_history(name)
         if history is None:
             return "スプレッドシートからあなたの名前が見つかりませんでした。\n" "bot に登録された名前 `%s` は正しいですか？" % name
-        return ("履歴: {}\n"
-                "予測: {}").format(format_history(history), prediction_url(history))
+        return ("履歴: {}\n" "予測: {}").format(
+            format_history(history), prediction_url(history)
+        )
 
     def handle_bind_request(
         self, author: discord.Member, request: parse_result.BindRequest

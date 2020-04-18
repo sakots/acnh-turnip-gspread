@@ -33,9 +33,15 @@ class TestParseService(TestCase):
 
     def test_recognize_empty(self):
         service = parse.ParseService(bot())
-        self.assertEqual(service.recognize(make_mention("")), parse_result.EmptyRequest())
-        self.assertEqual(service.recognize(make_mention(" ")), parse_result.EmptyRequest())
-        self.assertEqual(service.recognize(make_mention("　")), parse_result.EmptyRequest())
+        self.assertEqual(
+            service.recognize(make_mention("")), parse_result.EmptyRequest()
+        )
+        self.assertEqual(
+            service.recognize(make_mention(" ")), parse_result.EmptyRequest()
+        )
+        self.assertEqual(
+            service.recognize(make_mention("　")), parse_result.EmptyRequest()
+        )
 
     def test_recognize_update(self):
         service = parse.ParseService(bot())
@@ -54,13 +60,18 @@ class TestParseService(TestCase):
 
     def test_recognize_hist(self):
         service = parse.ParseService(bot())
-        self.assertEqual(service.recognize(make_mention("hist")), parse_result.HistoryRequest())
-        self.assertEqual(service.recognize(make_mention("history")), parse_result.HistoryRequest())
+        self.assertEqual(
+            service.recognize(make_mention("hist")), parse_result.HistoryRequest()
+        )
+        self.assertEqual(
+            service.recognize(make_mention("history")), parse_result.HistoryRequest()
+        )
 
     def test_recognize_bind(self):
         service = parse.ParseService(bot())
         self.assertEqual(
-            parse_result.BindRequest("alice"), service.recognize(make_mention("im　alice"))
+            parse_result.BindRequest("alice"),
+            service.recognize(make_mention("im　alice")),
         )
         self.assertEqual(
             parse_result.BindRequest("ありす"), service.recognize(make_mention("im　ありす"))
@@ -107,7 +118,8 @@ class TestParseService(TestCase):
                 datetime.datetime(2020, 4, 15, 11, 0, 0),
                 parse_result.UpdateRequest("水AM", 100),
                 "水曜午前",
-            ),            (
+            ),
+            (
                 "水am",
                 datetime.datetime(2020, 4, 15, 11, 0, 0),
                 parse_result.InvalidUpdateRequest(),

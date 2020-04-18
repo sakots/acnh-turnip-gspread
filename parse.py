@@ -163,7 +163,11 @@ def parse_update_command(
 
     # どちらも指定されていない
     if weekday != "買値" and (weekday is None) != (ampm is None):
-        logger.info("invalid update request. none or both of weekday and ampm must be specified. weekday=%s, ampm=%s", weekday, ampm)
+        logger.info(
+            "invalid update request. none or both of weekday and ampm must be specified. weekday=%s, ampm=%s",
+            weekday,
+            ampm,
+        )
         return parse_result.InvalidUpdateRequest()
     # use current
     backward = False
