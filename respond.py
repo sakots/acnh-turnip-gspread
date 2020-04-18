@@ -182,12 +182,5 @@ def prediction_url(history: List[str]) -> str:
     """
     if len(history) != 13:
         raise ValueError("length must be 13")
-    res = "https://turnipprophet.io/?prices=%s" % history[0]
-    for p in history[1:]:
-        s = ""
-        if p is None:
-            s = ""
-        else:
-            s = (str(p) or "").strip()
-        res += ".%s" % s
-    return res + "&"
+    a = ".".join(map(lambda x: "" if x is None else str(x).strip(), history))
+    return "https://turnipprophet.io/?prices=%s&" % a
