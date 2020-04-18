@@ -30,9 +30,9 @@ class RespondService:
             # TODO: @[kabu] を外部から注入する
             return (
                 "カブ価と期間は正しく入力されていますか？\n"
-                "現在時刻で登録: `@[kabu] +100` (価格は必須です)\n"
-                "売値を期間を指定して登録: `@[kabu] +100 月AM` (曜日と午前午後は指定するなら両方必要です)"
-                "買値登録: `@[kabu] +100 買い`"
+                "現在時刻で登録: `@[kabu] 100` (価格は必須です)\n"
+                "売値を期間を指定して登録: `@[kabu] 100 月AM` (曜日と午前午後は指定するなら両方必要です)"
+                "買値登録: `@[kabu] 100 買い`"
             )
         elif isinstance(request, parse_result.BindRequest):
             return self.handle_bind_request(author, request)
@@ -128,7 +128,9 @@ class RespondService:
         history = table_service.find_user_history(name)
         if history is None:
             return "スプレッドシートからあなたの名前が見つかりませんでした。\n" "bot に登録された名前 `%s` は正しいですか？" % name
-        return "{}の履歴: {}".format(name, format_history(history))
+        return ("履歴: {}\n" "予測: {}").format(
+            format_history(history), prediction_url(history)
+        )
 
     def handle_bind_request(
         self, author: discord.Member, request: parse_result.BindRequest
@@ -181,12 +183,5 @@ def prediction_url(history: List[str]) -> str:
     """
     if len(history) != 13:
         raise ValueError("length must be 13")
-    res = "https://turnipprophet.io/?prices=%s" % history[0]
-    for p in history[1:]:
-        s = ""
-        if p is None:
-            s = ""
-        else:
-            s = (str(p) or "").strip()
-        res += ".%s" % s
-    return res + "&"
+    a = ".".join(map(lambda x: "" if x is None else str(x).strip(), history))
+    return "https://turnipprophet.io/?prices=%s&" % a
