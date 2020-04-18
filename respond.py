@@ -145,7 +145,7 @@ class RespondService:
                 description="bot に登録された名前 `%s` は正しいですか？" % name,
             )
         return response.success(
-            title="あなたの履歴です",
+            title="履歴です",
             fields=[("履歴", format_history(history)), ("予測", prediction_link(history))],
         )
 
