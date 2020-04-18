@@ -174,11 +174,18 @@ class RespondService:
 def format_history(history: List[str]) -> str:
     if len(history) != 13:
         raise ValueError("length must be 13")
+    last = 0
+    for i, h in enumerate(history):
+        if (h is None) or (not h):
+            continue
+        s = str(h).strip()
+        if s == "" or s == "-":
+            continue
+        last = i
     res = "%s" % history[0]
-    # TODO: 最後の数より後は - で埋めない
-    for i in range(1, 13, 2):
-        am, pm = history[i], history[i + 1]
-        res += " %s/%s" % (format_price(am), format_price(pm))
+    for i in range(1, last + 1):
+        res += "/ "[i % 2]
+        res += format_price(history[i])
     return res
 
 
