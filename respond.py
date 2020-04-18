@@ -111,12 +111,11 @@ class RespondService:
         history = table_service.find_user_history(name)
 
         logger.info("history: %s", history)
+        change = "%s %s→%s" % (request.term, org_price, request.price)
         return response.success(
             title="スプレッドシートに書きました",
             fields=[
-                ("元の価格", org_price),
-                ("新しい価格", request.price),
-                ("期間", request.term),
+                ("変更内容", change),
                 ("名前", "`%s`" % name),
                 ("履歴", format_history(history)),
                 ("予測", prediction_link(history)),
