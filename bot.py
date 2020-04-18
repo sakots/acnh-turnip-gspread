@@ -54,7 +54,7 @@ class TurnipPriceBotService:
         # respond to message by self.respond_service
         response = self.respond_service.respond_to(message, request)
         if response is not None:
-            await message.channel.send(response)
+            await message.channel.send(response.content, embed=response.embed)
             logger.info(
-                "message sent. content: %s, in reply to %s", response, message.id
+                "message sent. response: %s, in reply to %s", response, message.id
             )
