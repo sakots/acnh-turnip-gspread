@@ -69,20 +69,19 @@ class RespondService:
         table_service = TurnipPriceTableViewService(raw_table)
         name = self.bind_service.find_name(author.id)
         if name is None:
-            # TODO: スプレッドシートのURLを貼る
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
                 description=(
-                    "スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
+                    "%sに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
                 )
-                % self.user.display_name,
+                % (self.spread_sheet_link(), self.user.display_name),
             )
         position = table_service.find_position(name, request.term)
         if isinstance(position, table.UserNotFound):
             logger.info("user not found on table. user: %s", author)
             return response.warning(
                 title="スプレッドシートからあなたの名前が見つかりません",
-                description="bot に登録された名前 `%s` は正しいですか？" % name,
+                description="bot に登録された%sでの名前 `%s` は正しいですか？" % (self.spread_sheet_link(), name),
             )
         if not isinstance(position, table.Found):
             logger.error(
@@ -143,15 +142,16 @@ class RespondService:
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
                 description=(
-                    "スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
+                    "%sに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
                 )
-                % self.user.display_name,
+                % (self.spread_sheet_link(), self.user.display_name),
             )
         history = table_service.find_user_history(name)
         if history is None:
+            # FIXME: dup
             return response.warning(
                 title="スプレッドシートからあなたの名前が見つかりません",
-                description="bot に登録された名前 `%s` は正しいですか？" % name,
+                description="bot に登録された%sでの名前 `%s` は正しいですか？" % (self.spread_sheet_link(), name),
             )
         return response.success(
             title="履歴です",
@@ -174,7 +174,7 @@ class RespondService:
         logger.info("successfully bound. %s is %s, ", author, request.name)
         return response.success(
             title="覚えました",
-            description="%s はスプレッドシートで `%s`。" % (author.display_name, request.name),
+            description="%s は%sで `%s`。" % (author.display_name, self.spread_sheet_link(), request.name),
         )
 
     def handle_who_am_i_request(
@@ -185,8 +185,8 @@ class RespondService:
             logger.info("successfully found name. author: %s, name: %s", author, name)
             return response.success(
                 title="覚えてます",
-                description="bot に登録された %s のスプレッドシートでの名前は %s です。"
-                % (author.display_name, name),
+                description="bot に登録された %s の%sでの名前は %s です。"
+                % (author.display_name, self.spread_sheet_link(), name),
             )
         else:
             logger.info(
@@ -196,10 +196,13 @@ class RespondService:
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
                 description=(
-                    "スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
+                    "%sに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
                 )
-                % self.user.display_name,
+                % (self.spread_sheet_link(), self.user.display_name),
             )
+
+    def spread_sheet_link(self):
+        return "[スプレッドシート](https://docs.google.com/spreadsheets/d/%s)" % self.gspread_service.name
 
 
 def format_history(history: List[str]) -> str:

@@ -15,6 +15,7 @@ class GspreadService:
         credentials = ServiceAccountCredentials.from_json_keyfile_dict(
             credential, scope
         )
+        self.name = name
         client = gspread.authorize(credentials)
         spreadsheet = client.open_by_key(name)
         self.worksheets = spreadsheet.worksheets()
