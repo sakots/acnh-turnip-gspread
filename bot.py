@@ -18,7 +18,11 @@ class TurnipPriceBot(discord.Client):
         super().run(self.bot_token)
 
     async def on_ready(self):
-        logger.info("bot is ready")
+        logger.info("bot is ready. name: %s, id:%s", self.user.name, self.user.id)
+        logger.info("joining guilds:")
+        for g in self.guilds:
+            g: discord.Guild
+            logger.info("* %s (%s)", g.name, g.id)
 
     async def on_message(self, message: discord.Message):
         logger.info(
