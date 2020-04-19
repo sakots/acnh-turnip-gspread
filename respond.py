@@ -12,7 +12,8 @@ from table import TurnipPriceTableViewService
 
 
 class RespondService:
-    def __init__(self, gspread_service: GspreadService, bind_service: BindService):
+    def __init__(self, user: discord.ClientUser, gspread_service: GspreadService, bind_service: BindService):
+        self.user = user
         self.gspread_service = gspread_service
         self.bind_service = bind_service
 
@@ -28,13 +29,12 @@ class RespondService:
         elif isinstance(request, parse_result.HistoryRequest):
             return self.handle_history_request(author)
         elif isinstance(request, parse_result.InvalidUpdateRequest):
-            # TODO: @[kabu] を外部から注入する
             return response.warning(
                 title="カブ価と期間が分かりません",
-                description="正しく入力されていますか？\n"
-                "- `@[kabu] 100` -> 現在時刻で登録\n"
-                "- `@[kabu] 100 月AM` -> 売値を期間を指定して登録\n"
-                "- `@[kabu] 100 買い` -> 買値登録: ",
+                description=("正しく入力されていますか？\n"
+                "- `@{0} 100` -> 現在時刻で登録\n"
+                "- `@{0} 100 月AM` -> 売値を期間を指定して登録\n"
+                "- `@{0} 100 買い` -> 買値登録").format(self.user.display_name),
             )
         elif isinstance(request, parse_result.BindRequest):
             return self.handle_bind_request(author, request)
@@ -65,8 +65,8 @@ class RespondService:
             # TODO: スプレッドシートのURLを貼る
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
-                description="スプレッドシートに名前を入力してから `@[kabu] im [スプレッドシートでの名前]`"
-                " とリプライして登録してください。",
+                description=("スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`"
+                " とリプライして登録してください。") % self.user.display_name,
             )
         position = table_service.find_position(name, request.term)
         if isinstance(position, table.UserNotFound):
@@ -137,8 +137,8 @@ class RespondService:
             # FIXME: dup
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
-                description="スプレッドシートに名前を入力してから `@[kabu] im [スプレッドシートでの名前]`"
-                " とリプライして登録してください。",
+                description=("スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`"
+                " とリプライして登録してください。") % self.user.display_name,
             )
         history = table_service.find_user_history(name)
         if history is None:
@@ -184,8 +184,8 @@ class RespondService:
             # FIXME: dup
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
-                description="スプレッドシートに名前を入力してから `@[kabu] im [スプレッドシートでの名前]`"
-                " とリプライして登録してください。",
+                description=("スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`"
+                " とリプライして登録してください。") % self.user.display_name,
             )
 
 
