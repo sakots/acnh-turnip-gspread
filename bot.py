@@ -9,7 +9,13 @@ from respond import RespondService
 
 
 class TurnipPriceBot(discord.Client):
-    def __init__(self, token: str, gspread_service: gspreads.GspreadService, bind_service: BindService, **options):
+    def __init__(
+        self,
+        token: str,
+        gspread_service: gspreads.GspreadService,
+        bind_service: BindService,
+        **options
+    ):
         super().__init__(**options)
         self.bot_token = token
         self.gspread_service = gspread_service
@@ -25,7 +31,9 @@ class TurnipPriceBot(discord.Client):
         for g in self.guilds:
             g: discord.Guild
             logger.info("* %s (%s)", g.name, g.id)
-        self.respond_service = RespondService(self.user, self.gspread_service, self.bind_service)
+        self.respond_service = RespondService(
+            self.user, self.gspread_service, self.bind_service
+        )
 
     async def on_message(self, message: discord.Message):
         logger.info(

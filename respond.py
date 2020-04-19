@@ -12,7 +12,12 @@ from table import TurnipPriceTableViewService
 
 
 class RespondService:
-    def __init__(self, user: discord.ClientUser, gspread_service: GspreadService, bind_service: BindService):
+    def __init__(
+        self,
+        user: discord.ClientUser,
+        gspread_service: GspreadService,
+        bind_service: BindService,
+    ):
         self.user = user
         self.gspread_service = gspread_service
         self.bind_service = bind_service
@@ -31,10 +36,12 @@ class RespondService:
         elif isinstance(request, parse_result.InvalidUpdateRequest):
             return response.warning(
                 title="カブ価と期間が分かりません",
-                description=("正しく入力されていますか？\n"
-                "- `@{0} 100` -> 現在時刻で登録\n"
-                "- `@{0} 100 月AM` -> 売値を期間を指定して登録\n"
-                "- `@{0} 100 買い` -> 買値登録").format(self.user.display_name),
+                description=(
+                    "正しく入力されていますか？\n"
+                    "- `@{0} 100` -> 現在時刻で登録\n"
+                    "- `@{0} 100 月AM` -> 売値を期間を指定して登録\n"
+                    "- `@{0} 100 買い` -> 買値登録"
+                ).format(self.user.display_name),
             )
         elif isinstance(request, parse_result.BindRequest):
             return self.handle_bind_request(author, request)
@@ -65,8 +72,10 @@ class RespondService:
             # TODO: スプレッドシートのURLを貼る
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
-                description=("スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`"
-                " とリプライして登録してください。") % self.user.display_name,
+                description=(
+                    "スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
+                )
+                % self.user.display_name,
             )
         position = table_service.find_position(name, request.term)
         if isinstance(position, table.UserNotFound):
@@ -118,11 +127,7 @@ class RespondService:
         hist = "%s (%s)" % (format_history(history), prediction_link("予測", history))
         return response.success(
             title="スプレッドシートに書きました",
-            fields=[
-                ("変更内容", change),
-                ("名前", "`%s`" % name),
-                ("履歴", hist),
-            ],
+            fields=[("変更内容", change), ("名前", "`%s`" % name), ("履歴", hist),],
         )
 
     def handle_history_request(
@@ -137,8 +142,10 @@ class RespondService:
             # FIXME: dup
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
-                description=("スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`"
-                " とリプライして登録してください。") % self.user.display_name,
+                description=(
+                    "スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
+                )
+                % self.user.display_name,
             )
         history = table_service.find_user_history(name)
         if history is None:
@@ -148,7 +155,10 @@ class RespondService:
             )
         return response.success(
             title="履歴です",
-            fields=[("履歴", format_history(history)), ("予測", prediction_link("Turnip Prophet", history))],
+            fields=[
+                ("履歴", format_history(history)),
+                ("予測", prediction_link("Turnip Prophet", history)),
+            ],
         )
 
     def handle_bind_request(
@@ -175,7 +185,8 @@ class RespondService:
             logger.info("successfully found name. author: %s, name: %s", author, name)
             return response.success(
                 title="覚えてます",
-                description="bot に登録された %s のスプレッドシートでの名前は %s です。" % (author.display_name, name),
+                description="bot に登録された %s のスプレッドシートでの名前は %s です。"
+                % (author.display_name, name),
             )
         else:
             logger.info(
@@ -184,8 +195,10 @@ class RespondService:
             # FIXME: dup
             return response.warning(
                 title="スプレッドシートでの名前が bot に登録されていません",
-                description=("スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`"
-                " とリプライして登録してください。") % self.user.display_name,
+                description=(
+                    "スプレッドシートに名前を入力してから `@%s im [スプレッドシートでの名前]`" " とリプライして登録してください。"
+                )
+                % self.user.display_name,
             )
 
 
