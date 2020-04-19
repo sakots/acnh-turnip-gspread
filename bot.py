@@ -8,27 +8,17 @@ from parse import ParseService
 from respond import RespondService
 
 
-class TurnipPriceBotService:
-    def __init__(
-        self,
-        token: str,
-        gspread_service: gspreads.GspreadService,
-        bind_service: BindService,
-    ):
+class TurnipPriceBot(discord.Client):
+    def __init__(self, token: str, gspread_service: gspreads.GspreadService, bind_service: BindService, **options):
+        super().__init__(**options)
         self.respond_service = RespondService(gspread_service, bind_service)
         self.bot_token = token
-        self.client = discord.Client()
-
-        @self.client.event
-        async def on_ready():
-            logger.info("bot is ready")
-
-        @self.client.event
-        async def on_message(message):
-            await self.on_message(message)
 
     def run(self):
-        self.client.run(self.bot_token)
+        super().run(self.bot_token)
+
+    async def on_ready(self):
+        logger.info("bot is ready")
 
     async def on_message(self, message: discord.Message):
         logger.info(
@@ -39,7 +29,7 @@ class TurnipPriceBotService:
         )
 
         # parse message by parse_service
-        parse_service = ParseService(self.client.user)
+        parse_service = ParseService(self.user)
         try:
             request: parse_result.ParseResult = parse_service.recognize(message)
         except Exception as e:

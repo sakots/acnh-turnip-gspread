@@ -9,7 +9,7 @@ import yaml
 
 import gspreads
 from bind import BindService
-from bot import TurnipPriceBotService
+from bot import TurnipPriceBot
 from logger import logger
 
 
@@ -68,7 +68,7 @@ def main():
     # bind
     bind_service = BindService(collection)
 
-    bot_service = TurnipPriceBotService(
+    bot_service = TurnipPriceBot(
         config["discord_bot_token"], gspread_service, bind_service
     )
     bot_service.run()
