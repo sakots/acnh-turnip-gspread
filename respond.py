@@ -162,22 +162,20 @@ class RespondService:
                 title="スプレッドシートでの名前を覚える際にエラーが発生しました", description="開発者は確認してください。"
             )
         logger.info("successfully bound. %s is %s, ", author, request.name)
-        author_str = author.nick or str(author)
         return response.success(
             title="覚えました",
-            description="%s はスプレッドシートで `%s`。" % (author_str, request.name),
+            description="%s はスプレッドシートで `%s`。" % (author.display_name, request.name),
         )
 
     def handle_who_am_i_request(
         self, author: discord.Member
     ) -> Optional[response.Response]:
         name = self.bind_service.find_name(author.id)
-        author_str = author.nick or str(author)
         if name is not None:
             logger.info("successfully found name. author: %s, name: %s", author, name)
             return response.success(
                 title="覚えてます",
-                description="bot に登録された %s のスプレッドシートでの名前は %s です。" % (author_str, name),
+                description="bot に登録された %s のスプレッドシートでの名前は %s です。" % (author.display_name, name),
             )
         else:
             logger.info(
