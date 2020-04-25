@@ -147,6 +147,7 @@ $ docker-compose up
         1. `config.yml` で `mongo_use_inmemory: true` とする
 1. `pip install pipenv`
 1. `pipenv install`
+1. `. secret.sh` を忘れない
 1. `pipenv run python main.py --config config.yml` で起動
 
 ## スプレッドシートに書く場所の決定方法
